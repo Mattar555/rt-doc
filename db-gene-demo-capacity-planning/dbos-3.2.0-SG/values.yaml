@@ -11,7 +11,7 @@ global:
   domain: rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud
   routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
 
-  imageRegistry: dbos-registry.decisionbrain.cloud
+  imageRegistry: quay-registry-quay-quay.rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud/dbgene
   imagePullSecrets:
     - name: dbos-registry.decisionbrain.cloud
   protocol: https # http or https
