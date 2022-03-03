@@ -64,6 +64,7 @@ For other errors
 
 
 Cluster Settings->images ->cluster
+```yaml
 Annotations:
 
 include.release.openshift.io/ibm-cloud-managed: 'true'
@@ -79,3 +80,10 @@ spec:
       - 'image-registry.openshift-image-registry.svc:5000'
       - registry.hub.docker.com
       - docker.io
+```
+
+Error
+```bash
+Failed to pull image "dbos-registry.decisionbrain.cloud/dbos-master:3.2.0": rpc error: code = Unknown desc = Error reading manifest 3.2.0 in dbos-registry.decisionbrain.cloud/dbos-master: unauthorized: access to the requested resource is not authorized
+1
+```
