@@ -9,7 +9,7 @@ global:
   # data used to build the domain for all URLs
   # service URLs are built by default using <serviceConfig.name>.<routeHostBase>
   domain: rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud
-  routeHostBase: "{{ tpl .Values.global.host . }}"
+  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
 
   imageRegistry: dbos-registry.decisionbrain.cloud
   imagePullSecrets:

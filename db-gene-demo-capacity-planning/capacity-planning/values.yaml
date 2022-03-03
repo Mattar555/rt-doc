@@ -10,7 +10,7 @@ global:
   target: "okd"
   appLabel: "app"
   domain: rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud  # Override with an existing domain name
-  routeHostBase: "{{ tpl .Values.global.host . }}"
+  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
   routes:
     host: "{{ tpl .Values.global.routeHostBase . }}"
     type: Ingress # may be : Ingress, IngressRoute, Gateway, Route, None (depending or you Ingress controller)
