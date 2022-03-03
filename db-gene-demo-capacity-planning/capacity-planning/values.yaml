@@ -19,8 +19,8 @@ global:
   docker:
     registry: "dbgene-demos-registry.decisionbrain.cloud/capacity-planning" # Override with an existing docker registry
     imagePullPolicy: Always
-    imagePullSecrets: []
-#    - name: secret-name # Override with an existing dockerconfigjson secret name
+    imagePullSecrets: 
+    - name: dbos-registry.decisionbrain.cloud # Override with an existing dockerconfigjson secret name
   environmentVariables:
   # Allow micro service to reach each other
   - name: "SERVICES_EXECUTION_HOST"
