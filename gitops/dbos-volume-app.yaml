@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dbos-volumes
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: openshift-gitops
+    server: https://kubernetes.default.svc
+  project: doc-project
+  source:
+    path: db-gene-demo-capacity-planning/dbos-volumes-3.2.0-SG
+    repoURL: https://github.com/Mattar555/rt-doc
+    targetRevision: HEAD

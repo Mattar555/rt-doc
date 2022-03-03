@@ -87,3 +87,9 @@ Error
 Failed to pull image "dbos-registry.decisionbrain.cloud/dbos-master:3.2.0": rpc error: code = Unknown desc = Error reading manifest 3.2.0 in dbos-registry.decisionbrain.cloud/dbos-master: unauthorized: access to the requested resource is not authorized
 1
 ```
+```bash
+kubectl create secret docker-registry internal-quay-secret --docker-server=quay-registry-quay-quay.rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud/ --docker-username=quayadmin --docker-password=quaypass123 --docker-email=leo.liu@ibm.com
+```
+
+To add imagePullSecrets
+`oc secrets link default internal-quay-secret --for=pull`
