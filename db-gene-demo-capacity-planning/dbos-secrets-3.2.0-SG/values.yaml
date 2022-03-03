@@ -42,4 +42,4 @@ keycloak:
 
 pullers:
   - name: dbos-registry.decisionbrain.cloud
-    dockerconfigjson: "" # set your customer credential here
+    dockerconfigjson: "ewoJImF1dGhzIjogewoJCSJkYmdlbmUtZGVtb3MtcmVnaXN0cnkuZGVjaXNpb25icmFpbi5jbG91ZCI6IHsKCQkJImF1dGgiOiAiWkdKblpXNWxMV1JsYlc5ek9tbGxVMmhoTVZCdiIKCQl9Cgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTkuMDMuNiAobGludXgpIgoJfQp9Cg==" # set your customer credential here
