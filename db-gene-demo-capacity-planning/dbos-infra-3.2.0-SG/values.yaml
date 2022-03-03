@@ -1,10 +1,16 @@
+dbos-secrets:
+  pullers:
+    - name: dbgene-demos-registry.decisionbrain.cloud-secret
+      dockerconfigjson: ewoJImF1dGhzIjogewoJCSJkYmdlbmUtZGVtb3MtcmVnaXN0cnkuZGVjaXNpb25icmFpbi5jbG91ZCI6IHsKCQkJImF1dGgiOiAiWkdKblpXNWxMV1JsYlc5ek9tbGxVMmhoTVZCdiIKCQl9Cgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTkuMDMuNiAobGludXgpIgoJfQp9Cg==
+
+
 global:
-  target: k8s # k8s or okd
+  target: okd # k8s or okd
 
   # data used to build the domain for all URLs
   # service URLs are built by default using <serviceConfig.name>.<routeHostBase>
-  domain: okd.decisionbrain.io
-  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
+  domain: rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud
+  routeHostBase: "{{ tpl .Values.global.host . }}"
 
   protocol: https # http or https
   routeKind: Ingress # <Ingress|IngressRoute> Only with target = k8s
