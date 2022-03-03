@@ -18,6 +18,7 @@ global:
   routeKind: Ingress # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
   authMode: keycloak
   localCluster: false
+  imagestream: false
 
 # DBOS configuration
 keycloak:
