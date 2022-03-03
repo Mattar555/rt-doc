@@ -1,0 +1,38 @@
+version: '2.2'
+services:
+  python-engine-worker:
+    image: ${APP_DOCKER_REGISTRY}/capacity-planning/python-engine-worker:${PROJECT_VERSION_DOCKER_TAG}
+    container_name: capacity-planning-python-engine-worker
+    volumes:
+      - ./data/logs:/logs
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_TOOL_OPTIONS=-Xmx4000m -Xms500m
+      - OPTIMSERVER_URL=http://dbos-master:8080/
+      - OPTIMSERVER_JWT_JWTKEY=ADI3PBiMzIG2XPMRpcvIKwSTLgZrkolv
+    cpu_percent: 75
+    mem_limit: 2000M
+    networks:
+      - capacity-planning
+  wml-worker:
+    image: ${GENE_DOCKER_REGISTRY}/dbos-wml-worker:demo2
+    volumes:
+      - ./data/logs:/logs
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_OPTS=-Xmx1000m -Xms500m -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/logs/opl-worker-heap-dump.hprof
+      - OPTIMSERVER_URL=http://dbos-master:8080/
+      - OPTIMSERVER_JWT_JWTKEY=ADI3PBiMzIG2XPMRpcvIKwSTLgZrkolv
+#      Michel's key
+      - IBM_API_KEY=BMilzB7nw2tdU_b0NbEr7VV9izaY4nNOkUZMclnjWzIH
+    cpu_percent: 75
+    mem_limit: 300M
+    networks:
+      - capacity-planning
+networks:
+  capacity-planning:
+    external: true

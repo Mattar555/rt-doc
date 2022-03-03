@@ -1,0 +1,41 @@
+version: '2.2'
+services:
+  dbos-master:
+    image: ${GENE_DOCKER_REGISTRY}/dbos-master:${DBOS_VERSION}
+    container_name: capacity-planning-dbos-master
+    networks:
+      - capacity-planning
+    ports:
+      - 8088:8080
+    volumes:
+      - ./data/logs:/logs
+    environment:
+      - SPRING_DATA_MONGODB_HOST=mongo # The different parameters are explained in a following step.
+      - SPRING_DATA_MONGODB_USERNAME=optimserver
+      - SPRING_DATA_MONGODB_PASSWORD=optimserver
+      - SPRING_DATA_MONGODB_ADMIN_USER=admin
+      - SPRING_DATA_MONGODB_ADMIN_PASSWORD=admin
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_OPTS=-Xmx500m -Xms10m
+      - KEYCLOAK_AUTHSERVERURL=http://keycloak:8080/auth # Keycloak service url in docker network
+      - KEYCLOAK_REALM=decisionbrain
+      - KEYCLOAK_RESOURCE=optimserver
+      - OPTIMSERVER_JWTKEY=ADI3PBiMzIG2XPMRpcvIKwSTLgZrkolv
+    cpu_percent: 75
+    mem_limit: 500M
+  dbos-web-console:    # The web-console client is optional.
+    image: ${GENE_DOCKER_REGISTRY}/dbos-web-ui-dashboard:${DBOS_VERSION}
+    container_name: capacity-planning-dbos-web-console
+    networks:
+      - capacity-planning
+    ports:
+      - 8089:8080
+    environment:
+      - OPTIMSERVER_MASTER_URL=http://dbos-master:8080/  # The URL refers to the master image
+      - OPTIMSERVER_MASTER_DOC_URL=${DBOS_DOCUMENTATION_URL}  # The public documentation URL (optional)
+      - KEYCLOAK_URL=http://localhost:9090/ # Use the keycloak front end url (KEYCLOAK_FRONTEND_URL) for the optimization server web console
+networks:
+  capacity-planning:
+    external: true

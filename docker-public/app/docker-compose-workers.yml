@@ -1,0 +1,53 @@
+version: '2.2'
+services:
+  checker-worker:
+    image: ${APP_DOCKER_REGISTRY}/capacity-planning/checker-worker:${PROJECT_VERSION_DOCKER_TAG}
+    container_name: capacity-planning-checker-worker
+    volumes:
+      - ./data/logs:/logs
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_TOOL_OPTIONS=-Xmx4000m -Xms500m
+      - OPTIMSERVER_URL=http://dbos-master:8080/
+      - OPTIMSERVER_JWT_JWTKEY=ADI3PBiMzIG2XPMRpcvIKwSTLgZrkolv
+    cpu_percent: 75
+    mem_limit: 1000M
+    networks:
+      - capacity-planning
+  engine-worker:
+    image: ${APP_DOCKER_REGISTRY}/capacity-planning/engine-worker:${PROJECT_VERSION_DOCKER_TAG}
+    container_name: capacity-planning-engine-worker
+    volumes:
+      - ./data/logs:/logs
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_TOOL_OPTIONS=-Xmx4000m -Xms500m
+      - OPTIMSERVER_URL=http://dbos-master:8080/
+      - OPTIMSERVER_JWT_JWTKEY=ADI3PBiMzIG2XPMRpcvIKwSTLgZrkolv
+    cpu_percent: 75
+    mem_limit: 4256M
+    networks:
+      - capacity-planning
+  python-engine-worker:
+    image: ${APP_DOCKER_REGISTRY}/capacity-planning/python-engine-worker:${PROJECT_VERSION_DOCKER_TAG}
+    container_name: capacity-planning-python-engine-worker
+    volumes:
+      - ./data/logs:/logs
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_TOOL_OPTIONS=-Xmx4000m -Xms500m
+      - OPTIMSERVER_URL=http://dbos-master:8080/
+      - OPTIMSERVER_JWT_JWTKEY=ADI3PBiMzIG2XPMRpcvIKwSTLgZrkolv
+    cpu_percent: 75
+    mem_limit: 4256M
+    networks:
+      - capacity-planning
+networks:
+  capacity-planning:
+    external: true

@@ -1,0 +1,51 @@
+{{- $config := .Values.config -}}
+{{- $global := .Values.global -}}
+{{- $name := $config.name -}}
+
+{{- if .Values.enabled }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ $name }}-init-scripts"
+data:
+  10-create_user.sh: |
+    #!/bin/bash
+    set -e
+
+    {{- range $dbAlias := .Values.databases }}
+    echo "Creating role $POSTGRESQL_{{ $dbAlias }}_username }} for database $POSTGRESQL_{{ $dbAlias }}_database }}"
+    psql --set password="'$POSTGRESQL_{{ $dbAlias }}_password'" --set username="$POSTGRESQL_{{ $dbAlias }}_username" <<-EOSQL
+    CREATE USER :username WITH CREATEDB PASSWORD :password;
+    EOSQL
+    {{- end }}
+  20-create_db.sh: |
+    #!/bin/bash
+    set -e
+
+    {{- range $dbAlias := .Values.databases }}
+    echo "Creating database {{ $dbAlias }} with role: $POSTGRESQL_{{ $dbAlias }}_username }}"
+    psql --set database="$POSTGRESQL_{{ $dbAlias }}_database" --set username="'$POSTGRESQL_{{ $dbAlias }}_username'" <<EOSQL
+    CREATE DATABASE :database OWNER :username;
+    EOSQL
+    {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  ports:
+    - name: 5432-tcp
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  sessionAffinity: None
+  type: ClusterIP
+---
+{{- end }}

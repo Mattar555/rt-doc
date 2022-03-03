@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 3.7.8-management
+description: A Rabbitmq chart for Openshift/Kubernetes
+name: rabbitmq
+type: application
+version: "1"

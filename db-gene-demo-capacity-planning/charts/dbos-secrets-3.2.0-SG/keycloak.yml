@@ -1,0 +1,18 @@
+{{- $config := .Values.keycloak.config -}}
+{{- $name := $config.name -}}
+
+{{- if .Values.keycloak.enabled }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+type: Opaque
+data:
+  {{- if eq .Values.keycloak.adminPassword "auto" }}
+  keycloak-admin-password: {{ b64enc (randAlphaNum 32) }}
+  {{- else }}
+  keycloak-admin-password: {{ b64enc (.Values.keycloak.adminPassword) }}
+  {{- end }}
+---
+{{- end }}

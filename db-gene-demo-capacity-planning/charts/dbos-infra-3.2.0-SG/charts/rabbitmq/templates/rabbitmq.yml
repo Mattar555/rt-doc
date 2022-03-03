@@ -1,0 +1,49 @@
+{{- $config := .Values.config -}}
+{{- $name := $config.name -}}
+{{- $global := .Values.global -}}
+
+{{- if .Values.enabled }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  ports:
+  {{- range .Values.tcpPorts }}
+    - name: {{.}}-tcp
+      port: {{.}}
+      protocol: TCP
+      targetPort: {{.}}
+  {{- end }}
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  sessionAffinity: None
+  type: ClusterIP
+---
+{{- if (eq $global.localCluster true) }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}-local
+spec:
+  ports:
+  {{- range .Values.tcpPorts }}
+  - name: {{.}}-tcp-local
+    port: {{.}}
+    protocol: TCP
+    targetPort: {{.}}
+  {{- end }}
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  sessionAffinity: None
+  type: LoadBalancer
+---
+{{- end }}
+{{- end }}

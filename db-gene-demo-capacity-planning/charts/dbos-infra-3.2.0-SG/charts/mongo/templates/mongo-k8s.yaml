@@ -1,0 +1,98 @@
+{{- $config := .Values.config -}}
+{{- $name := $config.name -}}
+{{- $global := .Values.global -}}
+{{- $isKubernetes := (eq $global.target "k8s") -}}
+
+{{- if and .Values.enabled $isKubernetes }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $config.appLabel }}
+      name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      containers:
+        - env:
+            {{- if .Values.env }}
+{{ tpl (toYaml .Values.env) . | indent 12 }}
+            {{- end }}
+            {{- range $dbAlias := .Values.databases }}
+              {{- range $secretSuffix := $global.databaseSettings }}
+            - name: MONGODB_{{ $dbAlias }}_{{ $secretSuffix }}
+              valueFrom:
+                secretKeyRef:
+                  name: mongo
+                  key: mongodb-{{ $dbAlias }}-{{ $secretSuffix }}
+              {{- end }}
+            {{- end }}
+          image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ $config.imageVersion }}"
+          imagePullPolicy: {{ $config.imagePullPolicy }}
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 27017
+            timeoutSeconds: 1
+          name: {{ $name }}
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 27017
+            timeoutSeconds: 1
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            {{- if .Values.volumeClaimName }}
+            - mountPath: /data/db
+              name: {{ $name }}-data
+            {{- end }}
+            - mountPath: /docker-entrypoint-initdb.d/addUser.sh
+              name: {{ $name }}-provisioning-data
+              subPath: addUser.sh
+      dnsPolicy: ClusterFirst
+      {{- if $config.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml $config.imagePullSecrets }}
+      {{- else if $global.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml $global.imagePullSecrets }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        {{- if .Values.volumeClaimName }}
+        - name: {{ $name }}-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.volumeClaimName }}
+        {{- end }}
+        - configMap:
+            defaultMode: 493
+            name: {{ $name }}-provisioning-data
+          name: {{ $name }}-provisioning-data
+---
+{{- end }}

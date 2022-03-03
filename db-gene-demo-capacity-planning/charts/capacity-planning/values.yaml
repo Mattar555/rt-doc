@@ -1,0 +1,168 @@
+# Shared configuration
+global:
+  # deployment type : "k8s" or "okd"
+  target: "k8s"
+  appLabel: "app"
+  domain: "mydomain.com"  # Override with an existing domain name
+  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
+  routes:
+    host: "{{ tpl .Values.global.routeHostBase . }}"
+    type: Ingress # may be : Ingress, IngressRoute, Gateway, Route, None (depending or you Ingress controller)
+    secured: true # Not supported yet, today it is https only
+  docker:
+    registry: "" # Override with an existing docker registry
+    imagePullPolicy: Always
+    imagePullSecrets: []
+#    - name: secret-name # Override with an existing dockerconfigjson secret name
+  environmentVariables:
+  # Allow micro service to reach each other
+  - name: "SERVICES_EXECUTION_HOST"
+    value: "execution-service"
+  - name: "SERVICES_EXECUTION_PORT"
+    value: "8080"
+  - name: "SERVICES_WEB_HOST"
+    value: "web"
+  - name: "SERVICES_WEB_PORT"
+    value: "8080"
+  - name: "SERVICES_BACKEND_HOST"
+    value: "backend-service"
+  - name: "SERVICES_BACKEND_PORT"
+    value: "8080"
+  - name: "SERVICES_GATEWAY_HOST"
+    value: "gateway-service"
+  - name: "SERVICES_GATEWAY_PORT"
+    value: "8080"
+  - name: "SERVICES_SCENARIO_HOST"
+    value: "scenario-service"
+  - name: "SERVICES_SCENARIO_PORT"
+    value: "8080"
+  - name: "SERVICES_DATA_HOST"
+    value: "data-service"
+  - name: "SERVICES_DATA_PORT"
+    value: "8080"
+  - name: "SERVICES_DOCUMENTATION_HOST"
+    value: "documentation-service"
+  - name: "SERVICES_DOCUMENTATION_PORT"
+    value: "3000"
+  - name: "SPRING_RABBITMQ_ADDRESSES"
+    value: "rabbitmq"
+  workers:
+    environmentVariables:
+      - name: "SPRING_RABBITMQ_HOST"
+        value: "rabbitmq"
+      - name: "SPRING_RABBITMQ_USERNAME"
+        valueFrom:
+          secretKeyRef:
+            key: rabbitmq-root-username
+            name: rabbitmq
+      - name: "SPRING_RABBITMQ_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            key: rabbitmq-root-password
+            name: rabbitmq
+      - name: "MASTER_URL"
+        value: "http://dbos-master:8080/"
+      - name: "MASTER_JWTKEY"
+        valueFrom:
+          secretKeyRef:
+            key: master-secret-jwtkey
+            name: dbos-master
+
+backendService:
+  serviceName: "backend-service"
+  limits:
+    cpuRequest: 50m
+    memLimit: 800Mi
+    memRequest: 800Mi
+  monitor: false
+  environmentVariables:
+  #use keycloak private URL unless you are sure to handle correctly public secured URL
+  - name: "KEYCLOAK_AUTH_SERVER_URL"
+    value: "http://keycloak:8080/auth"
+  - name: "JAVA_TOOL_OPTIONS"
+    value: "-XX:InitialRAMPercentage=95"
+  - name: "SERVICES_PERMISSION_MONGODB_HOST"
+    value: "mongo"
+
+scenarioService:
+    serviceName: "scenario-service"
+    limits:
+        cpuRequest: 50m
+        memLimit: 500Mi
+        memRequest: 500Mi
+    monitor: false
+    environmentVariables:
+    - name: "KEYCLOAK_AUTH_SERVER_URL"
+      value: "http://keycloak:8080/auth"
+    - name: "SPRING_DATA_MONGODB_HOST"
+      value: "mongo"
+    - name: "SERVICES_PERMISSION_MONGODB_HOST"
+      value: "mongo"
+    - name: "WEBSOCKET_ALLOWEDORIGIN"
+      value: "https://{{ .Values.global.routes.host }}"
+dataService:
+    serviceName: "data-service"
+    limits:
+        cpuRequest: 50m
+        memLimit: 800Mi
+        memRequest: 800Mi
+    monitor: false
+    environmentVariables:
+    - name: "KEYCLOAK_AUTH_SERVER_URL"
+      value: "http://keycloak:8080/auth"
+#    - name: "JAVA_TOOL_OPTIONS"
+#      value: "-XX:InitialRAMPercentage=95"
+    - name: "SPRING_PROFILES_ACTIVE"
+      value: "keycloak"
+    - name: "SPRING_DATASOURCE_URL"
+      value: "jdbc:postgresql://postgres:5432/data_server?reWriteBatchedInserts=true"
+    - name: "SERVICES_PERMISSION_MONGODB_HOST"
+      value: "mongo"
+    - name: "SPRING_DATA_MONGODB_HOST"
+      value: "mongo"
+    - name: "WEBSOCKET_ALLOWEDORIGIN"
+      value: "https://{{ .Values.global.routes.host }}"
+executionService:
+  serviceName: "execution-service"
+  limits:
+    cpuRequest: 50m
+    memLimit: 500Mi
+    memRequest: 500Mi
+  monitor: false
+  environmentVariables:
+  - name: "KEYCLOAK_AUTH_SERVER_URL"
+    value: "http://keycloak:8080/auth"
+  - name: "SPRING_DATA_MONGODB_HOST"
+    value: "mongo"
+  - name: "SERVICES_PERMISSION_MONGODB_HOST"
+    value: "mongo"
+  - name: "WEBSOCKET_ALLOWEDORIGIN"
+    value: "https://{{ .Values.global.routes.host }}"
+  - name: "SERVICES_DBOSMASTER_HOST"
+    value: "dbos-master"
+  - name: "SERVICES_DBOSMASTER_PORT"
+    value: "8080"
+#  - name: "JAVA_TOOL_OPTIONS"
+#    value: "-XX:InitialRAMPercentage=95"
+
+gatewayService:
+  serviceName: "gateway-service"
+  limits:
+    cpuRequest: 50m
+    memLimit: 500Mi
+    memRequest: 500Mi
+  monitor: false
+  environmentVariables: []
+
+web:
+  serviceName: "web"
+  limits:
+    cpuRequest: 0.1m
+    memLimit: 10Mi
+    memRequest: 5Mi
+  monitor: false
+  environmentVariables:
+    #used by browser : set to keycloak's public URL
+  - name: "KEYCLOAK_AUTH_SERVER_URL"
+    value: "https://keycloak-{{ .Values.global.routes.host }}/auth"
+

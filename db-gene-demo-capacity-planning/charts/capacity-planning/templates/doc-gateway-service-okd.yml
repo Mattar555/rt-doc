@@ -1,0 +1,152 @@
+{{- if eq .Values.global.target "okd" }}
+{{- $appLabel := .Values.global.appLabel -}}
+{{- $serviceName := .Values.gatewayService.serviceName -}}
+{{- $dockerImage := printf "%s/%s:%s" .Values.global.docker.registry $serviceName .Values.global.appVersion -}}
+{{- $dockerSecrets := .Values.global.docker.imagePullSecrets -}}
+{{- $limits := .Values.gatewayService.limits -}}
+{{- $environmentVariables := concat .Values.global.environmentVariables .Values.gatewayService.environmentVariables -}}
+{{- $monitor := .Values.gatewayService.monitor }}
+
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app: {{ $appLabel }}
+  name: {{ $serviceName }}
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: {{ $dockerImage | quote }}
+      importPolicy:
+        insecure: true
+        scheduled: true
+      name: {{ .Values.global.appVersion }}
+      referencePolicy:
+        type: Source
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: {{ $appLabel }}
+  name: {{ $serviceName }}
+spec:
+  replicas: 1
+  selector:
+    app: {{ $appLabel }}
+    deploymentconfig: {{ $serviceName }}
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: {{ $appLabel }}
+        name: {{ $serviceName }}
+        deploymentconfig: {{ $serviceName }}
+    spec:
+      containers:
+        - name: {{ $serviceName }}
+          image: {{ $dockerImage | quote }}
+          imagePullPolicy: {{ .Values.global.docker.imagePullPolicy }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          env:
+          {{- range $environmentVariables }}
+          - name: {{ .name }}
+            value: {{ tpl (tpl .value $) $   | quote }}
+          {{- end }}
+          resources:
+            limits:
+              memory: {{ $limits.memLimit }}
+            requests:
+              cpu: {{ $limits.cpuRequest }}
+              memory: {{ $limits.memRequest }}
+          {{- if $monitor }}
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 60
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+      {{- if $dockerSecrets }}
+      imagePullSecrets:
+        {{- range $dockerSecrets }}
+      - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - {{ $serviceName }}
+        from:
+          kind: ImageStreamTag
+          name: {{ $serviceName }}:{{ .Values.global.appVersion }}
+      type: ImageChange
+    - type: ConfigChange
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: {{ $appLabel }}
+  name: {{ $serviceName }}
+  annotations:
+    haproxy.router.openshift.io/timeout: 10m
+spec:
+  host: {{ tpl .Values.global.routes.host . }}
+  port:
+    targetPort: 8080-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: {{ $serviceName }}
+    weight: 100
+  wildcardPolicy: None
+# should be removed when okd API bug fixed (https://github.com/openshift/origin/issues/24060)
+status:
+  ingress:
+    - conditions:
+        - lastTransitionTime: "2019-12-06T03:24:58Z"
+          status: "True"
+          type: Admitted
+      host: ""
+      routerCanonicalHostname: ""
+      routerName: default
+      wildcardPolicy: None
+{{- end }}

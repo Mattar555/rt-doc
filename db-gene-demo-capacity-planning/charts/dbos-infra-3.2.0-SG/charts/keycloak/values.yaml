@@ -1,0 +1,44 @@
+global:
+  target: k8s # k8s or okd
+
+  # data used to build the domain for all URLs
+  # service URLs are built by default using <serviceConfig.name>.<routeHostBase>
+  domain: my.domain
+  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
+
+  # To use a custom registry without affecting global values, set the value "imageRegistry"
+  imageRegistry: registry.hub.docker.com
+  # To use a custom registry secrets, set the YAML value "imagePullSecrets"
+  #imagePullSecrets:
+  #  <YAML secrets config here>
+config:
+  # To use a custom registry without affecting global values, set the value "imageRegistry"
+  #imageRegistry: registry.hub.docker.com/library
+
+  # To use a custom registry secrets without affecting global values, set the YAML value "imagePullSecrets"
+  #imagePullSecrets:
+  #  <YAML secrets config here>
+
+  imageName: jboss/keycloak
+  imageVersion: 8.0.1
+  imagePullPolicy: IfNotPresent
+
+  appLabel: keycloak
+  name: keycloak
+
+  route:
+    servicePort: 8080
+
+  replicas: 1
+  resources:
+    limits:
+      memory: 600Mi
+    requests:
+      cpu: 50m
+      memory: 600Mi
+
+# Enable/disable keycloak
+enabled: true
+
+# args added to container command
+args: []

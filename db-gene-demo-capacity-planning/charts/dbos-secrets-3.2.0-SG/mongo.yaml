@@ -1,0 +1,32 @@
+{{- $config := .Values.mongo.config -}}
+{{- $name := $config.name -}}
+
+{{- if .Values.mongo.enabled }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+type: Opaque
+data:
+  mongo-initdb-root-username: {{ b64enc (.Values.mongo.rootUsername) }}
+  {{- if eq .Values.mongo.rootPassword "auto" }}
+  mongo-initdb-root-password: {{ b64enc (randAlphaNum 32) }}
+  {{- else }}
+  mongo-initdb-root-password: {{ b64enc (.Values.mongo.rootPassword) }}
+  {{- end }}
+  {{- range $dbAlias, $dbConf := .Values.mongo.databases }}
+    {{- range $secretSuffix, $secretValue := $dbConf }}
+      {{- if eq $secretSuffix "password" }}
+        {{- if eq $secretValue "auto" }}
+  mongodb-{{ $dbAlias }}-password: {{ b64enc (randAlphaNum 32) }}
+        {{- else }}
+  mongodb-{{ $dbAlias }}-password: {{ b64enc ($secretValue) }}
+        {{- end }}
+      {{- else }}
+  mongodb-{{ $dbAlias }}-{{$secretSuffix}}: {{ b64enc ($secretValue) }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+---
+{{- end }}

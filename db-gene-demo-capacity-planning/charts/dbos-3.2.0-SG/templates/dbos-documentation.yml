@@ -1,0 +1,20 @@
+{{- $config := .Values.documentation.config -}}
+{{- $name := $config.name -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  ports:
+    - name: 8080-tcp
+      port: {{ $config.route.servicePort }}
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  sessionAffinity: None
+  type: ClusterIP

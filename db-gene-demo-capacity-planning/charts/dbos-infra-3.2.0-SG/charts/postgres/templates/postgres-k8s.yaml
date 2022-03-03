@@ -1,0 +1,134 @@
+{{- $config := .Values.config -}}
+{{- $global := .Values.global -}}
+{{- $name := $config.name -}}
+{{- $isKubernetes := (eq $global.target "k8s") -}}
+
+{{- if and .Values.enabled $isKubernetes }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $config.appLabel }}
+      name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      {{- if .Values.shm }}
+      initContainers:
+      - command:
+        - /bin/sh
+        - -cx
+        - |
+          chmod -R 777 /dev/shm
+          df -h
+          ls -ld /dev/shm
+        image: docker.io/bitnami/minideb:buster
+        imagePullPolicy: Always
+        name: init-chmod-data
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: dshm
+      {{- end }}
+      containers:
+        - image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ $config.imageVersion }}"
+          imagePullPolicy: {{ tpl $config.imagePullPolicy . }}
+        {{- if .Values.env }}
+          env:
+{{ tpl (toYaml .Values.env) . | indent 12 }}
+        {{- end }}
+        {{- range $dbAlias := .Values.databases }}
+          {{- range $secretSuffix := $global.databaseSettings }}
+            - name: POSTGRESQL_{{ $dbAlias }}_{{ $secretSuffix }}
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: postgres-{{ $dbAlias }}-{{ $secretSuffix }}
+          {{- end }}
+        {{- end }}
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 5432
+            timeoutSeconds: 1
+          name: {{ $name }}
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 5432
+            timeoutSeconds: 1
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            {{- if .Values.shm }}
+            - mountPath: /dev/shm
+              name: dshm
+            {{- end }}
+            {{- if .Values.volumeClaimName }}
+            - mountPath: /var/lib/pgsql/data
+              name: {{ $name }}-data
+            {{- end }}
+            - mountPath: /usr/share/container-scripts/postgresql/start/10-create_user.sh
+              name: "{{ $name }}-init-scripts"
+              subPath: 10-create_user.sh
+            - mountPath: /usr/share/container-scripts/postgresql/start/20-create_db.sh
+              name: "{{ $name }}-init-scripts"
+              subPath: 20-create_db.sh
+      dnsPolicy: ClusterFirst
+      {{- if $config.imagePullSecrets }}
+      imagePullSecrets:
+{{ tpl (toYaml $config.imagePullSecrets) . | indent 8 }}
+      {{- else if $global.imagePullSecrets }}
+      imagePullSecrets:
+{{ tpl (toYaml $global.imagePullSecrets) . | indent 8 }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 26  # This is Postgres UID
+      terminationGracePeriodSeconds: 30
+      volumes:
+        {{- if .Values.shm }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shm }}
+        {{- end }}
+        {{- if .Values.volumeClaimName }}
+        - name: {{ $name }}-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.volumeClaimName }}
+        {{- end }}
+        - configMap:
+            defaultMode: 420
+            name: "{{ $name }}-init-scripts"
+          name: "{{ $name }}-init-scripts"
+---
+{{- end }}

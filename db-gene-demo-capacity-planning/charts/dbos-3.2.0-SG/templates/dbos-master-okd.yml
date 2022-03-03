@@ -1,0 +1,115 @@
+{{- $config := .Values.master.config -}}
+{{- $global := .Values.global -}}
+{{- $name := $config.name -}}
+{{- $isOpenshift := (eq $global.target "okd") -}}
+
+{{- if $isOpenshift }}
+
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      containers:
+        - image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ tpl $config.imageVersion . }}"
+          imagePullPolicy: {{ tpl $config.imagePullPolicy . }}
+          name: {{ $name }}
+          {{- if .Values.master.env }}
+          env:
+{{ tpl (toYaml .Values.master.env) . | indent 12 }}
+          {{- end }}
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 300
+            periodSeconds: 60
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      {{- if $global.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml $global.imagePullSecrets | indent 12 }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    {{- if (eq $global.imagestream true) }}
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - {{ $name }}
+        from:
+          kind: ImageStreamTag
+          name: {{ $config.name }}-imagestream:{{ tpl $config.imageVersion . }}
+      type: ImageChange
+    {{- end }}
+    - type: ConfigChange
+---
+{{- if (eq $global.imagestream true) }}
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $config.name }}-imagestream
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ tpl $config.imageVersion . }}"
+      importPolicy:
+        insecure: true
+        scheduled: true
+      name: {{ tpl $config.imageVersion . }}
+      referencePolicy:
+        type: Source
+---
+{{- end }}
+{{- end }}

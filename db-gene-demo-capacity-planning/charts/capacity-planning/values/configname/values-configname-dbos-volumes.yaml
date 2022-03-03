@@ -1,0 +1,11 @@
+# dbos-volumes chart values. Uncomment to override default values
+
+#mongo:
+#  enabled: true
+#  storageSize: 1Gi # size of mongo volume if enabled
+#  storageClassName: "" # storageClass of mongo volume. "" means default cluster value
+
+#postgres:
+#  enabled: true
+#  storageSize: 2Gi # size of postgres volume if enabled
+#  storageClassName: "" # storageClass of postgres volume. "" means default cluster value

@@ -1,0 +1,125 @@
+{{- $config := .Values.console.config -}}
+{{- $global := .Values.global -}}
+{{- $name := $config.name -}}
+{{- $isOpenshift := (eq $global.target "okd") -}}
+{{- $routeHost := ( tpl ($config.route.host | default "") .) | default (printf "%s-%s" $name (tpl .Values.global.routeHostBase .) ) }}
+{{- if $isOpenshift }}
+
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      containers:
+        - env:
+          {{- if .Values.console.env }}
+{{ tpl (toYaml .Values.console.env) . | indent 12 }}
+          {{- end }}
+          image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ tpl $config.imageVersion . }}"
+          imagePullPolicy: {{ tpl $config.imagePullPolicy . }}
+          name: {{ $name }}
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      {{- if $global.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml $global.imagePullSecrets | indent 12 }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    {{- if (eq $global.imagestream true) }}
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - {{ $name }}
+        from:
+          kind: ImageStreamTag
+          name: {{ $config.name }}-imagestream:{{ tpl $config.imageVersion . }}
+      type: ImageChange
+    {{- end }}
+    - type: ConfigChange
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  host: {{ $routeHost }}
+  port:
+    targetPort: {{ $name }}-8080-8080-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: {{ $name }}
+    weight: 100
+  wildcardPolicy: None
+# should be removed when okd API bug fixed (https://github.com/openshift/origin/issues/24060)
+status:
+  ingress:
+    - conditions:
+        - lastTransitionTime: "2019-12-06T03:24:58Z"
+          status: "True"
+          type: Admitted
+      host: ""
+      routerCanonicalHostname: ""
+      routerName: default
+      wildcardPolicy: None
+---
+{{- if (eq $global.imagestream true) }}
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $config.name }}-imagestream
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ tpl $config.imageVersion . }}"
+      importPolicy:
+        insecure: true
+        scheduled: true
+      name: {{ tpl $config.imageVersion . }}
+      referencePolicy:
+        type: Source
+---
+{{- end }}
+{{- end }}

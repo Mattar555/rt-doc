@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 4.2.1
+description: A Mongo chart for Openshift/Kubernetes
+name: mongo
+type: application
+version: "1"

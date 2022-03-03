@@ -1,0 +1,32 @@
+global:
+  target: k8s # k8s or okd
+  # To use a custom registry without affecting global values, set the value "imageRegistry"
+  imageRegistry: centos
+  # To use a custom registry secrets, set the YAML value "imagePullSecrets"
+  #imagePullSecrets:
+  #  <YAML secrets config here>
+config:
+  # To use a custom registry without affecting global values, set the value "imageRegistry"
+  #imageRegistry: registry.hub.docker.com/library
+
+  # To use a custom registry secrets without affecting global values, set the YAML value "imagePullSecrets"
+  #imagePullSecrets:
+  #  <YAML secrets config here>
+
+  imageName: postgresql-12-centos7
+  imageVersion: 20200703-6213611
+  imagePullPolicy: IfNotPresent
+
+  appLabel: postgres
+  name: postgres
+
+  replicas: 1
+  resources:
+    limits:
+      memory: 600Mi
+    requests:
+      cpu: 50m
+      memory: 600Mi
+
+#shm: 128m #shared memory size. useful for huge data
+enabled: true

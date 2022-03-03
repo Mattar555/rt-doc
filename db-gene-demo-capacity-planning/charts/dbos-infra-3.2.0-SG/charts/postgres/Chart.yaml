@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 20200324-f4310a3
+description: A Helm chart for Kubernetes
+name: postgres
+type: application
+version: "1"

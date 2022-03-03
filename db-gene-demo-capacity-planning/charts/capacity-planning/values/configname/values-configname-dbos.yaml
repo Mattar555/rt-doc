@@ -1,0 +1,35 @@
+global:
+#  target: k8s # k8s or okd
+  domain: mydomain.com # applications URLs are built using <app>-<namespace>.<domain>
+  imageRegistry: dbgene-registry.decisionbrain.cloud
+  imagePullSecrets:
+    - name: dbgene-registry.decisionbrain.cloud
+#  protocol: https # http or https
+  routeKind: IngressRoute # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
+  authMode: basicAuth # basicAuth or keycloak
+
+
+# DBOS configuration
+
+#master:
+#  config:
+#    resources:
+#      limits:
+#        memory: 1500Mi
+#      requests:
+#        cpu: 5m
+#        memory: 650Mi
+
+#  env:
+#    - name: JAVA_TOOL_OPTIONS
+#      value: -Xmx512m
+
+#console:
+#  config:
+#    resources:
+#      limits:
+#        memory: 10Mi
+#      requests:
+#        cpu: 1m
+#        memory: 1Mi
+#  keycloakUrl: '{{ .Values.global.protocol }}://{{ printf "%s-%s.%s" "keycloak" .Release.Namespace .Values.global.domain }}/'

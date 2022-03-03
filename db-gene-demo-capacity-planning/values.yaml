@@ -1,0 +1,532 @@
+# Default values for single charting of capacity-planning
+# When necessary, one should change
+#   - the target (k8s or okd)
+#   - the domain and the routeHostBase that are both used to define the application URLs
+#   - the pullers (access to the docker registry and associated secret)
+#   - by default all docker images are retrieved from dbgene-demos-registry.decisionbrain.cloud/* (public registry)
+
+global:
+  target: k8s
+  # Change this if you want different route names
+  # By default, routes are built using the service name: "https://<service>-<routeHostBase>"
+  domain: dbgd-capacity-planning.decisionbrain.cloud
+  routeHostBase: "{{ .Values.global.domain }}"
+
+dbos-secrets:
+  mongo:
+    databases:
+      scenario:
+        database: scenario-db
+        username: scenario
+        password: scenario
+      execution:
+        database: execution-db
+        username: execution
+        password: execution
+      permission:
+        database: permission-db
+        username: permission
+        password: permission
+
+  postgres:
+    #    enabled: true
+    #    rootPassword: #set to override defaults
+    databases:
+      #        keycloak:
+      #            database: #set to override defaults
+      #            username: #set to override defaults
+      #            password: #set to override defaults
+      dataServer:
+        database: data_server
+        username: data_server
+        password: data_server
+
+  #keycloak:
+  #    enabled: true
+  #    adminPassword: #set to override defaults
+
+  pullers:
+    # only one puller defined by default. The user/password give access to the DecisionBrain demo registry
+    - name: dbgene-demos-registry.decisionbrain.cloud-secret
+      dockerconfigjson: ewoJImF1dGhzIjogewoJCSJkYmdlbmUtZGVtb3MtcmVnaXN0cnkuZGVjaXNpb25icmFpbi5jbG91ZCI6IHsKCQkJImF1dGgiOiAiWkdKblpXNWxMV1JsYlc5ek9tbGxVMmhoTVZCdiIKCQl9Cgl9LAoJIkh0dHBIZWFkZXJzIjogewoJCSJVc2VyLUFnZW50IjogIkRvY2tlci1DbGllbnQvMTkuMDMuNiAobGludXgpIgoJfQp9Cg==
+
+dbos:
+  global:
+    # this registry gives access to everything needed to run the demo (including product images)
+    imageRegistry: dbgene-demos-registry.decisionbrain.cloud
+    imagePullSecrets:
+      - name: dbgene-demos-registry.decisionbrain.cloud-secret
+
+    #  protocol: https # http or https
+    routeKind: IngressRoute # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
+    authMode: keycloak # basicAuth or keycloak
+
+capacity-planning:
+  global:
+    appVersion: 1.0.8 #your docker images tag
+    routes:
+      host: "{{ tpl .Values.global.routeHostBase . }}"
+      type: IngressRoute # may be : Ingress, IngressRoute, Gateway, Route, None (depending or you Ingress controller)
+    docker:
+      # this registry gives access to everything needed to run the demo (application images)
+      registry: "dbgene-demos-registry.decisionbrain.cloud/capacity-planning"
+      imagePullSecrets:
+        - name: dbgene-demos-registry.decisionbrain.cloud-secret
+      imagePullPolicy: Always
+
+  workers:
+    - name: checker
+      limits:
+        cpuRequest: 100m
+        memLimit: 4256Mi
+        memRequest: 1000Mi
+      monitor: false
+      environmentVariables:
+        - name: "JAVA_TOOL_OPTIONS"
+          value: "-Xmx4000m -Xms500m  -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/checker-worker-heap-dump.hprof"
+    - name: engine
+      limits:
+        cpuRequest: 100m
+        memLimit: 4256Mi
+        memRequest: 1000Mi
+      monitor: false
+      environmentVariables:
+        - name: "JAVA_TOOL_OPTIONS"
+          value: "-Xmx4000m -Xms500m  -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/engine-worker-heap-dump.hprof"
+    - name: opl-engine
+      limits:
+        cpuRequest: 100m
+        memLimit: 4256Mi
+        memRequest: 1000Mi
+      monitor: false
+      environmentVariables:
+        - name: "JAVA_TOOL_OPTIONS"
+          value: "-Xmx4000m -Xms500m  -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/opl-engine-worker-heap-dump.hprof"
+    - name: python-engine
+      limits:
+        cpuRequest: 100m
+        memLimit: 4256Mi
+        memRequest: 1000Mi
+      monitor: false
+      environmentVariables:
+        - name: "JAVA_TOOL_OPTIONS"
+          value: "-Xmx4000m -Xms500m  -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/opl-engine-worker-heap-dump.hprof"
+
+dbos-infra:
+  global:
+    #  protocol: https # http or https
+    routeKind: IngressRoute # <Ingress|IngressRoute> Only with target = k8s
+    authMode: keycloak # basicAuth or keycloak
+
+  postgres:
+    #  shm: 128m
+    config:
+      imageName: postgresql-12-centos7
+      imageVersion: 20200703-6213611
+      resources:
+        limits:
+          memory: 512Mi
+        requests:
+          cpu: 50m
+          memory: 512Mi
+    databases:
+      - keycloak
+      - dataServer
+
+  mongo:
+    databases:
+      - dbos
+      - scenario
+      - execution
+      - permission
+
+  keycloak:
+    redirectHost: "{{ tpl .Values.global.routeHostBase . }}"
+    config:
+      route:
+        host: keycloak-{{ tpl .Values.global.routeHostBase . }}
+        servicePort: 8080
+      imageRegistry: "dbgene-demos-registry.decisionbrain.cloud/keycloak"
+      imageName: "keycloak-theme"
+      imageVersion: "8.0.1"
+      imagePullSecrets:
+        - name: "dbgene-demos-registry.decisionbrain.cloud-secret"
+    args:
+      - -Dkeycloak.migration.action=import
+      - -Dkeycloak.migration.provider=singleFile
+      - -Dkeycloak.migration.file=/tmp/realm.json
+      - -Dkeycloak.migration.strategy=IGNORE_EXISTING
+    realm: |
+      [
+        {
+          "keycloakVersion": "8.0.1",
+          "id": "gene",
+          "realm": "gene",
+          "displayName": "IBM DOC powered by DecisionBrain",
+          "displayNameHtml": "<div class=\"kc-logo-text\"><span>IBM DOC powered by DecisionBrain</span></div>",
+          "loginTheme": "gene",
+          "enabled": true,
+          "roles": {
+            "client": {
+              "gene-web": [
+                {
+                  "name": "SYSTEM",
+                  "composite": false,
+                  "clientRole": true,
+                  "containerId": "client-gene-web-id",
+                  "attributes": {}
+                },
+                {
+                  "name": "PERMISSIONS_ADMIN",
+                  "composite": false,
+                  "clientRole": true,
+                  "containerId": "client-gene-web-id",
+                  "attributes": {}
+                },
+                {
+                  "name": "GENE_USER",
+                  "composite": false,
+                  "clientRole": true,
+                  "containerId": "client-gene-web-id",
+                  "attributes": {}
+                }
+              ]
+            }
+          },
+          "groups": [
+            {
+              "name": "GENE_SERVICES",
+              "path": "/GENE_SERVICES",
+              "attributes": {},
+              "realmRoles": [],
+              "clientRoles": {
+                "gene-web": [
+                    "SYSTEM"
+                ],
+                "realm-management": [
+                    "view-clients",
+                    "view-users"
+                ]
+              },
+              "subGroups": []
+            },
+            {
+              "name": "GENE_USERS",
+              "path": "/GENE_USERS",
+              "attributes": {},
+              "realmRoles": [],
+              "clientRoles": {
+                "account": [
+                    "manage-account",
+                    "view-profile"
+                ],
+                "gene-web": [
+                    "GENE_USER"
+                ]
+              },
+              "subGroups": []
+            },
+            {
+              "name": "GENE_ADMINS",
+              "path": "/GENE_ADMINS",
+              "attributes": {},
+              "realmRoles": [],
+              "clientRoles": {
+                "gene-web": [
+                    "PERMISSIONS_ADMIN"
+                ]
+              },
+              "subGroups": []
+            }
+          ],
+          "clients": [
+            {
+              "id": "client-gene-web-id",
+              "clientId": "gene-web",
+              "rootUrl": "https://{{ tpl .Values.keycloak.redirectHost . }}",
+              "adminUrl": "https://{{ tpl .Values.keycloak.redirectHost . }}",
+              "clientAuthenticatorType": "client-secret",
+              "secret": "**********",
+              "redirectUris": [
+                  "https://{{ tpl .Values.keycloak.redirectHost . }}/*"
+              ],
+              "webOrigins": [
+                  "+"
+              ],
+              "directAccessGrantsEnabled": true,
+              "publicClient": true
+            }
+          ],
+          "users": [
+            {
+              "username": "gene_admin",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+                  "salt": "8s5bNTEoRUq0siS7Maui+g==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "clientRoles": {
+              },
+              "groups": [
+                  "GENE_ADMINS",
+                  "GENE_USERS"
+              ]
+            },
+            {
+              "username": "user1",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+                  "salt": "8s5bNTEoRUq0siS7Maui+g==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "clientRoles": {
+              },
+              "groups": [
+                  "GENE_USERS"
+              ]
+            },
+            {
+              "username": "user2",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+                  "salt": "8s5bNTEoRUq0siS7Maui+g==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "clientRoles": {
+              },
+              "groups": [
+                  "GENE_USERS"
+              ]
+            },
+            {
+              "username": "execution",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "/liflNf4sLUp47BS5fDH694C1xVGiSNlHk3ETzOYBDYk4ikURkJnVISS4fcq0wiJ5tri6mkhsSA6bcemZqDTeQ==",
+                  "salt": "DeJ32dx3GQo4VtvSNd45AA==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "clientRoles": {
+              },
+              "groups": [
+                  "GENE_SERVICES"
+              ]
+            },
+            {
+              "username": "backend",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "83zoilW8pIFn1HdzOkn00MuV+ujqSxwiVwHBdI87zhG0KQidMNmtQFI8X+5uhyBWXAVlWmU+S9kDxGc2tHpsfQ==",
+                  "salt": "6aOEPJiGMdV5ZBVxwJYcog==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "clientRoles": {
+              },
+              "groups": [
+                  "GENE_SERVICES"
+              ]
+            },
+            {
+              "username": "data-service",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "sXmRyhZ1rEUDAvK3+Kdg88A9w/dFYkqagtCN1rt6cBi4q2djcdRYHwTMEAAJxpqnIDGV6rvbiP3MJWCDFaQufQ==",
+                  "salt": "97ysMKjnZYloVUwgh/wfHQ==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "clientRoles": {
+              },
+              "groups": [
+                  "GENE_SERVICES"
+              ]
+            },
+            {
+              "username": "scenario-service",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type" : "password",
+                  "secretData" : "{\"value\":\"Dztk2OhTpghx66cJXIZMRYy8AXEHjrWDHm+Pd9BmsFRPtAGBXRcZvJFK1rJ+L5JOyr1c+CmLT1buWtVvHfejSg==\",\"salt\":\"eZOfoSw/gG7CaiopuWj4pQ==\"}",
+                  "credentialData" : "{\"hashIterations\":100000,\"algorithm\":\"pbkdf2-sha256\"}"
+                }
+              ],
+              "clientRoles": {
+                "realm-management": [
+                    "manage-users",
+                    "view-clients",
+                    "view-users"
+                ]
+              },
+              "groups": [
+                  "GENE_SERVICES"
+              ]
+            }
+          ]
+        },
+        {
+          "keycloakVersion": "8.0.1",
+          "id": "decisionbrain",
+          "realm": "decisionbrain",
+          "displayName": "Keycloak",
+          "displayNameHtml": "<div class=\"kc-logo-text\"><span>Keycloak</span></div>",
+          "loginTheme": "gene",
+          "enabled": true,
+          "roles": {
+            "realm": [
+              {
+                "name": "optimserver",
+                "description": "optimserver access role",
+                "composite": false,
+                "clientRole": false,
+                "containerId": "decisionbrain"
+              }
+            ],
+            "client": {
+              "optimserver": []
+            }
+          },
+          "groups": [
+            {
+              "name": "decisionbrain",
+              "path": "/decisionbrain",
+              "attributes": {},
+              "realmRoles": [
+                  "uma_authorization",
+                  "offline_access",
+                  "admin",
+                  "optimserver"
+              ],
+              "clientRoles": {
+                "account": [
+                    "manage-account",
+                    "view-profile"
+                ]
+              },
+              "subGroups": [{"name": "lab"}, {"name": "factory"}]
+            },
+            {
+              "name": "web-console",
+              "path": "/web-console",
+              "attributes": {},
+              "realmRoles": [
+                  "optimserver"
+              ],
+              "clientRoles": {
+                "account": [
+                    "manage-account",
+                    "view-profile"
+                ]
+              },
+              "subGroups": [{"name": "test-group"}]
+            }
+          ],
+          "clients": [
+            {
+              "clientId": "optimserver",
+              "name": "Optimization Server",
+              "rootUrl": "https://dbos-console-{{ tpl .Values.keycloak.redirectHost . }}",
+              "clientAuthenticatorType": "client-secret",
+              "secret": "**********",
+              "redirectUris": [
+                  "https://dbos-console-{{ tpl .Values.keycloak.redirectHost . }}/*"
+              ],
+              "webOrigins": [
+                  "+"
+              ],
+              "directAccessGrantsEnabled": true,
+              "publicClient": true,
+              "protocolMappers": [
+                {
+                  "name": "group-mapper",
+                  "protocol": "openid-connect",
+                  "protocolMapper": "oidc-group-membership-mapper",
+                  "consentRequired": false,
+                  "config": {
+                    "full.path": "true",
+                    "id.token.claim": "true",
+                    "access.token.claim": "true",
+                    "claim.name": "groups",
+                    "userinfo.token.claim": "true"
+                  }
+                }
+              ]
+            }
+          ],
+          "users" : [
+            {
+              "username": "execution",
+              "enabled": true,
+              "credentials": [
+                {
+                  "type": "password",
+                  "hashedSaltedValue": "/liflNf4sLUp47BS5fDH694C1xVGiSNlHk3ETzOYBDYk4ikURkJnVISS4fcq0wiJ5tri6mkhsSA6bcemZqDTeQ==",
+                  "salt": "DeJ32dx3GQo4VtvSNd45AA==",
+                  "hashIterations": 100000,
+                  "algorithm": "pbkdf2-sha256"
+                }
+              ],
+              "groups": [
+                  "/decisionbrain"
+              ]
+            },
+            {
+              "username" : "optimserver",
+              "enabled" : true,
+              "credentials" : [ {
+                "type" : "password",
+                "hashedSaltedValue" : "Ph9DHXD1JwATzUh2xbw4lpUYrpVXV2Quf0fz8qecxCvjLmrkU0H4wk6w6CDXZddaYYZlOc46UFxCEDU6gyh4oA==",
+                "salt" : "qQ8aU6/GKkqIepyx+DO/8A==",
+                "hashIterations" : 100000,
+                "algorithm" : "pbkdf2-sha256"
+              } ],
+              "groups": [
+                  "/decisionbrain"
+              ],
+              "clientRoles" : {
+                "realm-management" : [ "optimserver" ]
+              }
+            },
+            {
+              "username" : "test.user",
+              "enabled" : true,
+              "credentials" : [ {
+                "type" : "password",
+                "hashedSaltedValue" : "Ph9DHXD1JwATzUh2xbw4lpUYrpVXV2Quf0fz8qecxCvjLmrkU0H4wk6w6CDXZddaYYZlOc46UFxCEDU6gyh4oA==",
+                "salt" : "qQ8aU6/GKkqIepyx+DO/8A==",
+                "hashIterations" : 100000,
+                "algorithm" : "pbkdf2-sha256"
+              } ],
+              "groups": [
+                  "/web-console/test-group"
+              ]
+            }
+          ]
+        }
+      ]

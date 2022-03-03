@@ -1,0 +1,75 @@
+{{- $config := .Values.config -}}
+{{- $name := $config.name -}}
+{{- $global := .Values.global -}}
+{{- $isKubernetes := (eq $global.target "k8s") -}}
+
+{{- if and .Values.enabled $isKubernetes }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $config.appLabel }}
+      name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      containers:
+        - image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ $config.imageVersion }}"
+          imagePullPolicy: {{ $config.imagePullPolicy }}
+          name: {{ $name }}
+          {{- if .Values.env }}
+          env:
+{{ tpl (toYaml .Values.env) . | indent 12 }}
+          {{- end }}
+          ports:
+            {{- range .Values.tcpPorts }}
+            - containerPort: {{.}}
+              protocol: TCP
+            {{- end }}
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: "{{ $name }}-volume"
+            - mountPath: /var/log/rabbitmq
+              name: "{{ $name }}-logs-volume"
+            - mountPath: /etc/rabbitmq/enabled_plugins
+              name: "{{ $name }}-plugins"
+              subPath: enabled_plugins
+      dnsPolicy: ClusterFirst
+      {{- if $config.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml $config.imagePullSecrets }}
+      {{- else if $global.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml $global.imagePullSecrets }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: "{{ $name }}-volume"
+        - emptyDir: {}
+          name: "{{ $name }}-logs-volume"
+        - configMap:
+            defaultMode: 420
+            name: "{{ $name }}-plugins"
+          name: "{{ $name }}-plugins"
+---
+{{- end }}

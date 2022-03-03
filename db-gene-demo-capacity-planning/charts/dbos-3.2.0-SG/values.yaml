@@ -1,0 +1,139 @@
+global:
+  target: k8s # k8s or okd
+
+  # data used to build the domain for all URLs
+  # service URLs are built by default using <serviceConfig.name>.<routeHostBase>
+  domain: okd.decisionbrain.io
+  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
+
+  imageRegistry: dbos-registry.decisionbrain.cloud
+  imagePullSecrets:
+    - name: dbos-registry.decisionbrain.cloud
+  protocol: https # http or https
+  routeKind: Ingress # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
+  authMode: keycloak
+  localCluster: false
+
+# DBOS configuration
+keycloak:
+  realm: decisionbrain
+  clientId: optimserver
+
+documentation:
+  config:
+    imageName: dbos-documentation
+    imageVersion: "{{ .Chart.AppVersion }}"
+    imagePullPolicy: Always
+    appLabel: dbos
+    name: dbos-documentation
+    route:
+      servicePort: 8080
+    replicas: 1
+
+master:
+  config:
+    imageName: dbos-master
+    imageVersion: "{{ .Chart.AppVersion }}"
+    imagePullPolicy: Always
+    appLabel: dbos
+    name: dbos-master
+    route:
+      servicePort: 8080
+    replicas: 1
+    resources:
+      limits:
+        memory: 1500Mi
+      requests:
+        cpu: 5m
+        memory: 650Mi
+
+  env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: integration, {{ .Values.global.authMode }}
+  - name: JAVA_TOOL_OPTIONS
+    value: -Xmx512m
+  - name: SPRING_RABBITMQ_HOST
+    value: rabbitmq
+  - name: SPRING_RABBITMQ_USERNAME
+    valueFrom:
+      secretKeyRef:
+        key: rabbitmq-root-username
+        name: rabbitmq
+  - name: SPRING_RABBITMQ_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        key: rabbitmq-root-password
+        name: rabbitmq
+  - name: SPRING_DATA_MONGODB_HOST
+    value: mongo
+  - name: KEYCLOAK_AUTHSERVERURL
+    value: http://keycloak:8080/auth
+  - name: KEYCLOAK_SSLREQUIRED
+    value: NONE
+  - name: KEYCLOAK_REALM
+    value: "{{ tpl  .Values.keycloak.realm . }}"
+  - name: KEYCLOAK_RESOURCE
+    value: "{{ tpl  .Values.keycloak.clientId . }}"
+  - name: SPRING_DATA_MONGODB_USERNAME
+    valueFrom:
+      secretKeyRef:
+        key: mongodb-dbos-username
+        name: mongo
+  - name: SPRING_DATA_MONGODB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        key: mongodb-dbos-password
+        name: mongo
+  - name: SPRING_DATA_MONGODB_DATABASE
+    valueFrom:
+      secretKeyRef:
+        key: mongodb-dbos-database
+        name: mongo
+  - name: SPRING_DATA_MONGODB_ADMIN_USER
+    valueFrom:
+      secretKeyRef:
+        key: mongo-initdb-root-username
+        name: mongo
+  - name: SPRING_DATA_MONGODB_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        key: mongo-initdb-root-password
+        name: mongo
+  - name: OPTIMSERVER_JWTKEY
+    valueFrom:
+      secretKeyRef:
+        key: master-secret-jwtkey
+        name: dbos-master
+
+console:
+  config:
+    imageName: dbos-web-ui-dashboard
+    imageVersion: "{{ .Chart.AppVersion }}"
+    imagePullPolicy: Always
+    appLabel: dbos
+    name: dbos-console
+    route:
+      servicePort: 8080
+    replicas: 1
+    resources:
+      limits:
+        memory: 10Mi
+      requests:
+        cpu: 1m
+        memory: 1Mi
+  keycloakUrl: '{{ .Values.global.protocol }}://{{ printf "%s-%s" "keycloak" (tpl .Values.global.routeHostBase .) }}/'
+  env:
+  - name: KEYCLOAK_URL
+    value: "{{ tpl  .Values.console.keycloakUrl . }}"
+  - name: KEYCLOAK_REALM
+    value: "{{ tpl  .Values.keycloak.realm . }}"
+  - name: KEYCLOAK_CLIENT_ID
+    value: "{{ tpl  .Values.keycloak.clientId . }}"
+  - name: OPTIMSERVER_MASTER_URL
+    value: "http://{{ .Values.master.config.name }}:8080/"
+  - name: OPTIMSERVER_MASTER_DOC_URL
+    value: "http://{{ .Values.documentation.config.name }}:8080/"
+  - name: LOGGING_FILE
+    value: /tmp/dbos-console
+  - name: SPRING_PROFILES_ACTIVE
+    value: "{{ .Values.global.authMode }}"

@@ -1,0 +1,213 @@
+{{- $config := .Values.config -}}
+{{- $global := .Values.global -}}
+{{- $name := $config.name -}}
+{{- $isKubernetes := (eq $global.target "k8s") -}}
+{{- $routeHost := ( tpl ($config.route.host | default "") .) | default (printf "%s-%s" $name (tpl .Values.global.routeHostBase .) ) }}
+
+{{- if and .Values.enabled $isKubernetes }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $config.appLabel }}
+      name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      containers:
+        - env:
+          {{- if .Values.env }}
+{{ tpl (toYaml .Values.env) . | indent 12 }}
+          {{- end }}
+            - name: KEYCLOAK_FRONTEND_URL
+              value: {{ $config.frontEndURL | default (printf "%s://%s/auth" .Values.global.protocol $routeHost) }}
+            - name: KEYCLOAK_IMPORT
+              value: /tmp/realm.json
+          image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ $config.imageVersion }}"
+          imagePullPolicy: {{ tpl $config.imagePullPolicy . }}
+          name: {{ $name }}
+          {{- if .Values.args }}
+          args:
+{{ tpl (toYaml .Values.args) . | indent 12 }}
+          {{- end }}
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /tmp/realm.json
+              name: {{ $config.name }}-provisioning-data
+              subPath: realm.json
+      dnsPolicy: ClusterFirst
+      {{- if $config.imagePullSecrets }}
+      imagePullSecrets:
+{{ tpl (toYaml $config.imagePullSecrets) . | indent 8 }}
+      {{- else if $global.imagePullSecrets }}
+      imagePullSecrets:
+{{ tpl (toYaml $global.imagePullSecrets) . | indent 8 }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 493
+            name: {{ $config.name }}-provisioning-data
+          name: {{ $config.name }}-provisioning-data
+
+
+
+
+
+  {{- if (eq $global.routeKind "Ingress") }}
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: {{ $name }}-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: {{ $routeHost }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              serviceName: {{ $name }}
+              servicePort: {{ $config.route.servicePort }}
+  {{- end }}
+
+
+
+
+
+  {{- if eq $global.routeKind "IngressRoute" }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ $name }}-ingressroute
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`{{ $routeHost }}`) && PathPrefix(`/`)
+      {{- if eq .Values.global.protocol "https"}}
+      middlewares:
+        - name: redirect
+          namespace: kube-system
+      {{- end}}
+      services:
+        - name: {{ $name }}
+          port: {{ $config.route.servicePort }}
+
+    {{- if eq .Values.global.protocol "https"}}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ $name }}-ingressroutesecure
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ $routeHost }}`) && PathPrefix(`/`)
+      services:
+        - name: {{ $name }}
+          port: {{ $config.route.servicePort }}
+  tls: {}
+    {{- end }} {{- /* if eq .Values.global.protocol "https" */ -}}
+  {{- end }} {{- /* if eq $global.routeKind "IngressRoute" */ -}}
+
+
+
+
+
+  {{- if eq $global.routeKind "IngressGateway" }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ $name }}-ingress
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+      - {{ $routeHost }}
+      port:
+        name: http
+        number: 80
+        protocol: HTTP
+    {{- if ne .Values.global.protocol "https"}}
+      tls: {}
+    {{- else }}
+      tls:
+        httpsRedirect: true
+    - hosts:
+      - {{ $routeHost }}
+      port:
+        name: https-default
+        number: 443
+        protocol: HTTPS
+      tls:
+        credentialName: {{ $routeHost }}-tls
+        mode: SIMPLE
+---
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: {{ $routeHost }}
+  namespace: istio-system
+spec:
+  commonName: {{ $routeHost }}
+  dnsNames:
+    - {{ $routeHost }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-http01-issuer
+  secretName: {{ $routeHost }}-tls
+
+---
+
+     {{- end }} {{- /* if eq .Values.global.protocol "https" */ -}}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ $name }}
+spec:
+  gateways:
+    - {{ $name }}-ingress
+  hosts:
+    - {{ $routeHost }}
+  http:
+    - route:
+        - destination:
+            host: {{ $name }}
+            port:
+              number: {{ $config.route.servicePort }}
+  {{- end }} {{- /* if eq $global.routeKind "IngressGateway" */ -}}
+
+
+
+
+{{- end }} {{- /* $isKubernetes */ -}}

@@ -1,0 +1,31 @@
+{{- $config := .Values.postgres.config -}}
+{{- $name := $config.name -}}
+
+{{- if .Values.postgres.enabled }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+type: Opaque
+data:
+  {{- if eq .Values.postgres.rootPassword "auto" }}
+  postgres-admin-password: {{ b64enc (randAlphaNum 32) }}
+  {{- else }}
+  postgres-admin-password: {{ b64enc (.Values.postgres.rootPassword) }}
+  {{- end }}
+  {{- range $dbAlias, $dbConf := .Values.postgres.databases }}
+    {{- range $secretSuffix, $secretValue := $dbConf }}
+      {{- if eq $secretSuffix "password" }}
+        {{- if eq $secretValue "auto" }}
+  postgres-{{ $dbAlias }}-password: {{ b64enc (randAlphaNum 32) }}
+        {{- else }}
+  postgres-{{ $dbAlias }}-password: {{ b64enc ($secretValue) }}
+        {{- end }}
+      {{- else }}
+  postgres-{{ $dbAlias }}-{{$secretSuffix}}: {{ b64enc ($secretValue) }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+---
+{{- end }}

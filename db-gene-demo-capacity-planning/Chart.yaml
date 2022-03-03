@@ -1,0 +1,36 @@
+apiVersion: v1
+description: Capacity planning - Sample demo for Gene in a single chart
+name: db-gene-demo-capacity-planning
+version: 1.0.8
+
+dependencies:
+  - name: dbos-secrets
+    version: 3.2.0-SG
+    repository: file://../dbos-secrets-3.2.0-SG
+  - name: dbos-volumes
+    version: 3.2.0-SG
+    repository: file://../dbos-volumes-3.2.0-SG
+  - name: dbos-infra
+    version: 3.2.0-SG
+    repository: file://../dbos-infra-3.2.0-SG
+  - name: dbos
+    version: 3.2.0-SG
+    repository: file://../dbos-3.2.0-SG
+  - name: capacity-planning
+    version: 1.0.1
+    repository: file://../capacity-planning
+#  - name: dbos-secrets
+#    version: 3.1.1-UC
+#    repository: https://nexus.decisionbrain.cloud/repository/internal-helm/
+#  - name: dbos-volumes
+#    version: 3.1.1-UC
+#    repository: https://nexus.decisionbrain.cloud/repository/internal-helm/
+#  - name: dbos-infra
+#    version: 3.1.1-UC
+#    repository: https://nexus.decisionbrain.cloud/repository/internal-helm/
+#  - name: dbos
+#    version: 3.1.1-UC
+#    repository: https://nexus.decisionbrain.cloud/repository/internal-helm/
+#  - name: capacity-planning
+#    version: 1.0.8
+#    repository: https://nexus.decisionbrain.cloud/repository/internal-helm/

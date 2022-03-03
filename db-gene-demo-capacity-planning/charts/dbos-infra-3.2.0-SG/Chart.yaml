@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: 3.2.0
+description: A Helm chart that creates the DBOS infrastructure (Keycloak, MongoDB,
+  RabbitMQ, Postgres)
+name: dbos-infra
+type: application
+version: 3.2.0-SG

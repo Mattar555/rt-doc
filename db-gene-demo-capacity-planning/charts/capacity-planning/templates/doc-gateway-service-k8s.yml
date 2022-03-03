@@ -1,0 +1,117 @@
+{{- if eq .Values.global.target "k8s" }}
+{{- $appLabel := .Values.global.appLabel -}}
+{{- $serviceName := .Values.gatewayService.serviceName -}}
+{{- $dockerImage := printf "%s/%s:%s" .Values.global.docker.registry $serviceName .Values.global.appVersion -}}
+{{- $dockerSecrets := .Values.global.docker.imagePullSecrets -}}
+{{- $limits := .Values.gatewayService.limits -}}
+{{- $environmentVariables := concat .Values.global.environmentVariables .Values.gatewayService.environmentVariables -}}
+{{- $monitor := .Values.gatewayService.monitor }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    labels:
+        app: {{ $appLabel }}
+    name: {{ $serviceName }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ $appLabel }}
+      deploymentconfig: {{ $serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $appLabel }}
+        name: {{ $serviceName }}
+        deploymentconfig: {{ $serviceName }}
+    spec:
+      containers:
+      - name: {{ $serviceName }}
+        image: {{ $dockerImage | quote }}
+        imagePullPolicy: {{ .Values.global.docker.imagePullPolicy }}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        env:
+        {{- range $environmentVariables }}
+        - name: {{ .name }}
+          value: {{ tpl (tpl .value $) $   | quote }}
+        {{- end }}
+        resources:
+          limits:
+            memory: {{ $limits.memLimit }}
+          requests:
+            cpu: {{ $limits.cpuRequest }}
+            memory: {{ $limits.memRequest }}
+        {{- if $monitor }}
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 10
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 300
+          periodSeconds: 60
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        {{- end }}
+      {{- if $dockerSecrets }}
+      imagePullSecrets:
+        {{- range $dockerSecrets }}
+        - name: {{ .name }}
+          {{- end }}
+      {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+
+{{- if eq .Values.global.routes.type "Ingress" }}
+{{/* TODO add payload size nginx.ingress.kubernetes.io/proxy-body-size: 512m*/}}
+{{- end }}
+
+{{- if eq .Values.global.routes.type "IngressRoute" }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: doc-web
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`{{ tpl .Values.global.routes.host . }}`) && PathPrefix(`/`)
+      middlewares:
+        - name: redirect
+          namespace: kube-system
+      services:
+        - name: {{ $serviceName }}
+          port: 8080
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: doc-websecure
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ tpl .Values.global.routes.host . }}`) && PathPrefix(`/`)
+      services:
+        - name: {{ $serviceName }}
+          port: 8080
+  tls: {}
+{{- end }}
+
+{{- end }}

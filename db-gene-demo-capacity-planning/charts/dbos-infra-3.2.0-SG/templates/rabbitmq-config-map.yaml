@@ -1,0 +1,14 @@
+{{- $config := .Values.rabbitmq.config -}}
+{{- $name := $config.name -}}
+
+{{- if .Values.rabbitmq.enabled }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $config.name }}-plugins
+data:
+  enabled_plugins: |
+    {{ $config.plugins }}
+---
+{{- end }}

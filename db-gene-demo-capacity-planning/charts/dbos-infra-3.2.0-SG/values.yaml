@@ -1,0 +1,100 @@
+global:
+  target: k8s # k8s or okd
+
+  # data used to build the domain for all URLs
+  # service URLs are built by default using <serviceConfig.name>.<routeHostBase>
+  domain: okd.decisionbrain.io
+  routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
+
+  protocol: https # http or https
+  routeKind: Ingress # <Ingress|IngressRoute> Only with target = k8s
+  localCluster: false
+  databaseSettings:
+    - database
+    - username
+    - password
+
+rabbitmq:
+  config:
+    imageRegistry: registry.hub.docker.com/library
+    appLabel: infra
+    plugins: "[rabbitmq_management,rabbitmq_web_stomp]."
+
+mongo:
+  config:
+    imageRegistry: registry.hub.docker.com/library
+    appLabel: infra
+  volumeClaimName: mongo-data
+  env:
+    - name: MONGO_INITDB_ROOT_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: mongo
+          key: mongo-initdb-root-username
+    - name: MONGO_INITDB_ROOT_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: mongo
+          key: mongo-initdb-root-password
+  databases:
+    - dbos
+
+postgres:
+  config:
+    imageRegistry: centos
+    appLabel: infra
+  volumeClaimName: postgres-data
+  env:
+    - name: POSTGRESQL_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgres
+          key: postgres-admin-password
+  databases:
+    - keycloak
+
+keycloak:
+  redirectHost: '{{ printf "%s-%s.%s" "dbos-console" .Release.Namespace .Values.global.domain }}'
+  realmId: decisionbrain
+  clientId: optimserver
+  # Choose the ConfigMap where the realm file is
+  #realmConfigMapName: <name of the ConfigMap>
+  # Choose the name of the file of the ConfigMap that contains the realm file
+  #only used if keycloak.realm is empty
+  realmFileName: 'realm.json'
+  # allow to override realm with external content
+  realm: []
+  config:
+    imageRegistry: registry.hub.docker.com
+    appLabel: infra
+    route:
+      servicePort: 8080
+  env:
+  - name: KEYCLOAK_USER
+    value: admin
+  - name: KEYCLOAK_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak
+        key: keycloak-admin-password
+  - name: DB_VENDOR
+    value: postgres
+  - name: DB_ADDR
+    value: postgres
+  - name: DB_DATABASE
+    valueFrom:
+      secretKeyRef:
+        name: postgres
+        key: postgres-keycloak-database
+  - name: DB_USER
+    valueFrom:
+      secretKeyRef:
+        name: postgres
+        key: postgres-keycloak-username
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: postgres
+        key: postgres-keycloak-password
+  - name: PROXY_ADDRESS_FORWARDING
+    value: 'true'

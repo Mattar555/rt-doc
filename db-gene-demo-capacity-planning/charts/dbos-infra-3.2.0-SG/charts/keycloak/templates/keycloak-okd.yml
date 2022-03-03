@@ -1,0 +1,114 @@
+{{- $config := .Values.config -}}
+{{- $global := .Values.global -}}
+{{- $name := $config.name -}}
+{{- $isOpenshift := (eq $global.target "okd") -}}
+{{- $routeHost := ( tpl ($config.route.host | default "") .) | default (printf "%s-%s" $name (tpl .Values.global.routeHostBase .) ) }}
+
+{{- if and .Values.enabled $isOpenshift}}
+
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  name: {{ $name }}
+spec:
+  replicas: {{ $config.replicas }}
+  selector:
+    app: {{ $config.appLabel }}
+    name: {{ $name }}
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: {{ $config.appLabel }}
+        name: {{ $name }}
+    spec:
+      containers:
+        - env:
+          {{- if .Values.env }}
+{{ tpl (toYaml .Values.env) . | indent 12 }}
+          {{- end }}
+            - name: KEYCLOAK_FRONTEND_URL
+              value: {{ $config.frontEndURL | default (printf "%s://%s/auth" .Values.global.protocol $routeHost) }}
+            - name: KEYCLOAK_IMPORT
+              value: /tmp/realm.json
+          image: "{{ $config.imageRegistry | default $global.imageRegistry }}/{{ $config.imageName }}:{{ $config.imageVersion }}"
+          imagePullPolicy: {{ tpl $config.imagePullPolicy . }}
+          name: {{ $name }}
+          {{- if .Values.args }}
+          args:
+{{ tpl (toYaml .Values.args) . | indent 12 }}
+          {{- end }}
+          {{- if $config.resources }}
+          resources:
+{{ tpl (toYaml $config.resources) . | indent 12 }}
+          {{- end }}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /tmp/realm.json
+              name: {{ $config.name }}-provisioning-data
+              subPath: realm.json
+      dnsPolicy: ClusterFirst
+      {{- if $config.imagePullSecrets }}
+      imagePullSecrets:
+{{ tpl (toYaml $config.imagePullSecrets) . | indent 8 }}
+      {{- else if $global.imagePullSecrets }}
+      imagePullSecrets:
+{{ tpl (toYaml $global.imagePullSecrets) . | indent 8 }}
+      {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 493
+            name: {{ $config.name }}-provisioning-data
+          name: {{ $config.name }}-provisioning-data
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: {{ $config.appLabel }}
+  name: {{ $name }}
+spec:
+  host: {{ $routeHost }}
+  port:
+    targetPort: {{ $name }}-8080-8080-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: {{ $name }}
+    weight: 100
+  wildcardPolicy: None
+# should be removed when okd API bug fixed (https://github.com/openshift/origin/issues/24060)
+status:
+  ingress:
+    - conditions:
+        - lastTransitionTime: "2019-12-06T03:24:58Z"
+          status: "True"
+          type: Admitted
+      host: ""
+      routerCanonicalHostname: ""
+      routerName: default
+      wildcardPolicy: None
+---
+{{- end }}

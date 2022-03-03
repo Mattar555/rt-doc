@@ -1,0 +1,45 @@
+master:
+  enabled: true
+  config:
+    name: dbos-master
+  jwtkey: 32CharacterLengthRandomlyGeneratedString
+
+rabbitmq:
+  enabled: true
+  rootUsername: guest
+  rootPassword: guest
+  config:
+    name: rabbitmq
+
+mongo:
+  enabled: true
+  rootUsername: admin
+  rootPassword: admin
+  config:
+    name: mongo
+  databases:
+    dbos:
+      database: optimserver-master-db
+      username: optimserver
+      password: optimserver
+
+postgres:
+  enabled: true
+  rootPassword: admin
+  config:
+    name: postgres
+  databases:
+    keycloak:
+      database: keycloak
+      username: keycloak
+      password: keycloak
+
+keycloak:
+  enabled: true
+  adminPassword: admin
+  config:
+    name: keycloak
+
+pullers:
+  - name: dbos-registry.decisionbrain.cloud
+    dockerconfigjson: "" # set your customer credential here

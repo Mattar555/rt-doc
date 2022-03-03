@@ -1,0 +1,50 @@
+global:
+  target: k8s # k8s or okd
+  # To use a custom registry without affecting global values, set the value "imageRegistry"
+  imageRegistry: registry.hub.docker.com/library
+  # To use a custom registry secrets, set the YAML value "imagePullSecrets"
+  #imagePullSecrets:
+  #  <YAML secrets config here>
+config:
+  # To use a custom registry without affecting global values, set the value "imageRegistry"
+  #imageRegistry: registry.hub.docker.com/library
+
+  # To use a custom registry secrets without affecting global values, set the YAML value "imagePullSecrets"
+  #imagePullSecrets:
+  #  <YAML secrets config here>
+
+  imageName: "rabbitmq"
+  imageVersion: "3.7.8-management"
+  imagePullPolicy: IfNotPresent
+
+  appLabel: rabbitmq
+  name: rabbitmq
+
+  replicas: 1
+  resources:
+    limits:
+      memory: 400Mi
+    requests:
+      cpu: 8m
+      memory: 120Mi
+
+env:
+  - name: RABBITMQ_DEFAULT_USER
+    valueFrom:
+      secretKeyRef:
+        key: rabbitmq-root-username
+        name: rabbitmq
+  - name: RABBITMQ_DEFAULT_PASS
+    valueFrom:
+      secretKeyRef:
+        key: rabbitmq-root-password
+        name: rabbitmq
+
+enabled: true
+tcpPorts:
+- 5671
+- 5672
+- 15671
+- 15672
+- 25672
+- 61613

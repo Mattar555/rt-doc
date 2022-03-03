@@ -1,0 +1,29 @@
+global:
+  appVersion: "1.0.5" #your docker images tag
+  domain: mydomain.com
+  routes:
+        host: "{{ .Release.Namespace }}.{{ .Values.global.domain }}" # application URL
+        type: IngressRoute # may be : Ingress, IngressRoute, Gateway, Route, None (depending on you Ingress controller)
+  docker:
+    registry: myRegistry # your docker registry. e.g.: "dbgene-demos-registry.decisionbrain.cloud/capacity-planning"
+    imagePullPolicy: Always
+    imagePullSecrets: #secrets name  to pull images, they should be deployed in dbos-secrets.
+    - name: myPullSecret # e.g.: dbgene-demos-registry.decisionbrain.cloud-secret
+
+workers:
+  - name: checker
+    limits:
+      cpuRequest: 100m
+      memLimit: 4256Mi
+      memRequest: 1000Mi
+    environmentVariables:
+    - name: "JAVA_TOOL_OPTIONS"
+      value: "-Xmx4000m -Xms500m  -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/checker-worker-heap-dump.hprof"
+  - name: engine
+    limits:
+      cpuRequest: 100m
+      memLimit: 4256Mi
+      memRequest: 1000Mi
+    environmentVariables:
+    - name: "JAVA_TOOL_OPTIONS"
+      value: "-Xmx4000m -Xms500m  -XX:+CrashOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/engine-worker-heap-dump.hprof"

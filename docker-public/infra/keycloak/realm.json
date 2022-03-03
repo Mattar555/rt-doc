@@ -1,0 +1,376 @@
+[
+    {
+        "keycloakVersion": "8.0.1",
+        "id": "gene",
+        "realm": "gene",
+        "displayName": "Gene",
+        "displayNameHtml": "Gene powered by DecisionBrain",
+        "loginTheme": "gene",
+        "enabled": true,
+        "roles": {
+            "client": {
+                "gene-web": [
+                    {
+                        "name": "SYSTEM",
+                        "composite": false,
+                        "clientRole": true,
+                        "containerId": "client-gene-web-id",
+                        "attributes": {}
+                    },
+                    {
+                        "name": "PERMISSIONS_ADMIN",
+                        "composite": false,
+                        "clientRole": true,
+                        "containerId": "client-gene-web-id",
+                        "attributes": {}
+                    },
+                    {
+                        "name": "GENE_USER",
+                        "composite": false,
+                        "clientRole": true,
+                        "containerId": "client-gene-web-id",
+                        "attributes": {}
+                    }
+                ]
+            }
+        },
+        "groups": [
+            {
+                "name": "GENE_SERVICES",
+                "path": "/GENE_SERVICES",
+                "attributes": {},
+                "realmRoles": [],
+                "clientRoles": {
+                    "gene-web": [
+                        "SYSTEM"
+                    ],
+                    "realm-management": [
+                        "view-clients",
+                        "view-users"
+                    ]
+                },
+                "subGroups": []
+            },
+            {
+                "name": "GENE_USERS",
+                "path": "/GENE_USERS",
+                "attributes": {},
+                "realmRoles": [],
+                "clientRoles": {
+                    "account": [
+                        "manage-account",
+                        "view-profile"
+                    ],
+                    "gene-web": [
+                        "GENE_USER"
+                    ]
+                },
+                "subGroups": []
+            },
+            {
+                "name": "GENE_ADMINS",
+                "path": "/GENE_ADMINS",
+                "attributes": {},
+                "realmRoles": [],
+                "clientRoles": {
+                    "gene-web": [
+                        "PERMISSIONS_ADMIN"
+                    ]
+                },
+                "subGroups": []
+            }
+        ],
+        "clients": [
+            {
+                "id": "client-gene-web-id",
+                "clientId": "gene-web",
+                "rootUrl": "http://localhost:8080",
+                "adminUrl": "http://localhost:8080",
+                "clientAuthenticatorType": "client-secret",
+                "secret": "**********",
+                "redirectUris": [
+                    "http://localhost:8080/*"
+                ],
+                "webOrigins": [
+                    "+"
+                ],
+                "directAccessGrantsEnabled": true,
+                "publicClient": true
+            }
+        ],
+        "users": [
+            {
+                "username": "gene_admin",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+                        "salt": "8s5bNTEoRUq0siS7Maui+g==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "clientRoles": {
+                },
+                "groups": [
+                    "GENE_ADMINS",
+                    "GENE_USERS"
+                ]
+            },
+            {
+                "username": "user1",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+                        "salt": "8s5bNTEoRUq0siS7Maui+g==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "clientRoles": {
+                },
+                "groups": [
+                    "GENE_USERS"
+                ]
+            },
+            {
+                "username": "user2",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+                        "salt": "8s5bNTEoRUq0siS7Maui+g==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "clientRoles": {
+                },
+                "groups": [
+                    "GENE_USERS"
+                ]
+            },
+            {
+                "username": "execution-service",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "/liflNf4sLUp47BS5fDH694C1xVGiSNlHk3ETzOYBDYk4ikURkJnVISS4fcq0wiJ5tri6mkhsSA6bcemZqDTeQ==",
+                        "salt": "DeJ32dx3GQo4VtvSNd45AA==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "clientRoles": {
+                },
+                "groups": [
+                    "GENE_SERVICES"
+                ]
+            },
+            {
+                "username": "backend-service",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "83zoilW8pIFn1HdzOkn00MuV+ujqSxwiVwHBdI87zhG0KQidMNmtQFI8X+5uhyBWXAVlWmU+S9kDxGc2tHpsfQ==",
+                        "salt": "6aOEPJiGMdV5ZBVxwJYcog==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "clientRoles": {
+                },
+                "groups": [
+                    "GENE_SERVICES"
+                ]
+            },
+            {
+                "username": "data-service",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "sXmRyhZ1rEUDAvK3+Kdg88A9w/dFYkqagtCN1rt6cBi4q2djcdRYHwTMEAAJxpqnIDGV6rvbiP3MJWCDFaQufQ==",
+                        "salt": "97ysMKjnZYloVUwgh/wfHQ==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "clientRoles": {
+                },
+                "groups": [
+                    "GENE_SERVICES"
+                ]
+            },
+            {
+                "username": "scenario-service",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type" : "password",
+                        "secretData" : "{\"value\":\"Dztk2OhTpghx66cJXIZMRYy8AXEHjrWDHm+Pd9BmsFRPtAGBXRcZvJFK1rJ+L5JOyr1c+CmLT1buWtVvHfejSg==\",\"salt\":\"eZOfoSw/gG7CaiopuWj4pQ==\"}",
+                        "credentialData" : "{\"hashIterations\":100000,\"algorithm\":\"pbkdf2-sha256\"}"
+                    }
+                ],
+                "clientRoles": {
+                    "realm-management": [
+                        "manage-users",
+                        "view-clients",
+                        "view-users"
+                    ]
+                },
+                "groups": [
+                    "GENE_SERVICES"
+                ]
+            }
+        ],
+        "eventsListeners": [
+            "session-tracking-spi"
+        ]
+    },
+    {
+        "keycloakVersion": "8.0.1",
+        "id": "decisionbrain",
+        "realm": "decisionbrain",
+        "displayName": "Optimization Server",
+        "displayNameHtml": "<div class=\"kc-logo-text\"><span>Keycloak</span></div>",
+        "loginTheme": "gene",
+        "enabled": true,
+        "roles": {
+            "realm": [
+                {
+                    "name": "optimserver",
+                    "description": "optimserver access role",
+                    "composite": false,
+                    "clientRole": false,
+                    "containerId": "decisionbrain"
+                }
+            ],
+            "client": {
+                "optimserver": []
+            }
+        },
+        "groups": [
+            {
+                "name": "decisionbrain",
+                "path": "/decisionbrain",
+                "attributes": {},
+                "realmRoles": [
+                    "uma_authorization",
+                    "offline_access",
+                    "admin",
+                    "optimserver"
+                ],
+                "clientRoles": {
+                    "account": [
+                        "manage-account",
+                        "view-profile"
+                    ]
+                },
+                "subGroups": [{"name": "lab"}, {"name": "factory"}]
+            },
+            {
+                "name": "web-console",
+                "path": "/web-console",
+                "attributes": {},
+                "realmRoles": [
+                    "optimserver"
+                ],
+                "clientRoles": {
+                    "account": [
+                        "manage-account",
+                        "view-profile"
+                    ]
+                },
+                "subGroups": [{"name": "test-group"}]
+            }
+        ],
+        "clients": [
+            {
+                "clientId": "optimserver",
+                "name": "Optimization Server",
+                "rootUrl": "http://localhost:8089",
+                "clientAuthenticatorType": "client-secret",
+                "secret": "**********",
+                "redirectUris": [
+                    "http://localhost:8089/*"
+                ],
+                "webOrigins": [
+                    "+"
+                ],
+                "directAccessGrantsEnabled": true,
+                "publicClient": true,
+                "protocolMappers": [
+                    {
+                        "name": "group-mapper",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-group-membership-mapper",
+                        "consentRequired": false,
+                        "config": {
+                            "full.path": "true",
+                            "id.token.claim": "true",
+                            "access.token.claim": "true",
+                            "claim.name": "groups",
+                            "userinfo.token.claim": "true"
+                        }
+                    }
+                ]
+            }
+        ],
+        "users" : [
+            {
+                "username": "execution",
+                "enabled": true,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "hashedSaltedValue": "/liflNf4sLUp47BS5fDH694C1xVGiSNlHk3ETzOYBDYk4ikURkJnVISS4fcq0wiJ5tri6mkhsSA6bcemZqDTeQ==",
+                        "salt": "DeJ32dx3GQo4VtvSNd45AA==",
+                        "hashIterations": 100000,
+                        "algorithm": "pbkdf2-sha256"
+                    }
+                ],
+                "groups": [
+                    "/decisionbrain"
+                ]
+            },
+            {
+                "username" : "optimserver",
+                "enabled" : true,
+                "credentials" : [ {
+                    "type" : "password",
+                    "hashedSaltedValue" : "Ph9DHXD1JwATzUh2xbw4lpUYrpVXV2Quf0fz8qecxCvjLmrkU0H4wk6w6CDXZddaYYZlOc46UFxCEDU6gyh4oA==",
+                    "salt" : "qQ8aU6/GKkqIepyx+DO/8A==",
+                    "hashIterations" : 100000,
+                    "algorithm" : "pbkdf2-sha256"
+                } ],
+                "groups": [
+                    "/decisionbrain"
+                ],
+                "clientRoles" : {
+                    "realm-management" : [ "optimserver" ]
+                }
+            },
+            {
+                "username" : "test.user",
+                "enabled" : true,
+                "credentials" : [ {
+                    "type" : "password",
+                    "hashedSaltedValue" : "Ph9DHXD1JwATzUh2xbw4lpUYrpVXV2Quf0fz8qecxCvjLmrkU0H4wk6w6CDXZddaYYZlOc46UFxCEDU6gyh4oA==",
+                    "salt" : "qQ8aU6/GKkqIepyx+DO/8A==",
+                    "hashIterations" : 100000,
+                    "algorithm" : "pbkdf2-sha256"
+                } ],
+                "groups": [
+                    "/web-console/test-group"
+                ]
+            }
+        ]
+    }
+]
