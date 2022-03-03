@@ -9,6 +9,7 @@ global:
   # deployment type : "k8s" or "okd"
   target: "okd"
   appLabel: "app"
+  appVersion: 1.0.8
   domain: rio-aps-doc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud  # Override with an existing domain name
   routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
   routes:
@@ -16,7 +17,7 @@ global:
     type: Ingress # may be : Ingress, IngressRoute, Gateway, Route, None (depending or you Ingress controller)
     secured: true # Not supported yet, today it is https only
   docker:
-    registry: "" # Override with an existing docker registry
+    registry: "dbgene-demos-registry.decisionbrain.cloud/capacity-planning" # Override with an existing docker registry
     imagePullPolicy: Always
     imagePullSecrets: []
 #    - name: secret-name # Override with an existing dockerconfigjson secret name
