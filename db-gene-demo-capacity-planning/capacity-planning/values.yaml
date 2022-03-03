@@ -164,7 +164,7 @@ web:
   serviceName: "web"
   limits:
     cpuRequest: 0.1m
-    memLimit: 10Mi
+    memLimit: 15Mi
     memRequest: 5Mi
   monitor: false
   environmentVariables:
