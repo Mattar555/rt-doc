@@ -24,10 +24,12 @@ data:
   20-create_db.sh: |
     #!/bin/bash
     set -e
-
-    {{- range $dbAlias := .Values.databases }}
-    echo "Creating database {{ $dbAlias }} with role: $POSTGRESQL_{{ $dbAlias }}_username }}"
-    psql --set database="$POSTGRESQL_{{ $dbAlias }}_database" --set username="'$POSTGRESQL_{{ $dbAlias }}_username'" <<EOSQL
+    echo "Creating database keycloak with role: $POSTGRESQL_keycloak_username }}"
+    psql --set database="$POSTGRESQL_keycloak_database" --set username="'$POSTGRESQL_keycloak_username'" <<EOSQL
+    CREATE DATABASE :database OWNER :username;
+    EOSQL
+    echo "Creating database dataServer with role: $POSTGRESQL_dataServer_username }}"
+    psql --set database="$POSTGRESQL_dataServer_database" --set username="'$POSTGRESQL_dataServer_username'" <<EOSQL
     CREATE DATABASE :database OWNER :username;
     EOSQL
     {{- end }}
