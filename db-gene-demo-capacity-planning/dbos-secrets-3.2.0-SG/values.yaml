@@ -33,6 +33,10 @@ postgres:
       database: keycloak
       username: keycloak
       password: keycloak
+    dataServer:
+      database: data_server
+      username: data_server
+      password: data_server
 
 keycloak:
   enabled: true
