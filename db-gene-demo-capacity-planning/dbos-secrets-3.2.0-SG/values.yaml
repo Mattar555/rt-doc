@@ -22,6 +22,18 @@ mongo:
       database: optimserver-master-db
       username: optimserver
       password: optimserver
+    scenario:
+      database: scenario-db
+      username: scenario
+      password: scenario
+    execution:
+      database: execution-db
+      username: execution
+      password: execution
+    permission:
+      database: permission-db
+      username: permission
+      password: permission
 
 postgres:
   enabled: true
