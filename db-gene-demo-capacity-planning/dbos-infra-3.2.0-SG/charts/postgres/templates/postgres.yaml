@@ -12,10 +12,12 @@ data:
   10-create_user.sh: |
     #!/bin/bash
     set -e
-
-    {{- range $dbAlias := .Values.databases }}
-    echo "Creating role $POSTGRESQL_{{ $dbAlias }}_username }} for database $POSTGRESQL_{{ $dbAlias }}_database }}"
-    psql --set password="'$POSTGRESQL_{{ $dbAlias }}_password'" --set username="$POSTGRESQL_{{ $dbAlias }}_username" <<-EOSQL
+    echo "Creating role $POSTGRESQL_keycloak_username }} for database $POSTGRESQL_keycloak_database }}"
+    psql --set password="'$POSTGRESQL_keycloak_password'" --set username="$POSTGRESQL_keycloak_username" <<-EOSQL
+    CREATE USER :username WITH CREATEDB PASSWORD :password;
+    EOSQL
+    echo "Creating role $POSTGRESQL_dataServer_username }} for database $POSTGRESQL_dataServer_database }}"
+    psql --set password="'$POSTGRESQL_dataServer_password'" --set username="$POSTGRESQL_dataServer_username" <<-EOSQL
     CREATE USER :username WITH CREATEDB PASSWORD :password;
     EOSQL
     {{- end }}
