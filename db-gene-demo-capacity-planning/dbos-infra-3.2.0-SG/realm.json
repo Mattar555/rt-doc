@@ -1,5 +1,5 @@
-[
-  {
+
+{
     "id": "gene",
     "realm": "gene",
     "displayName": "IBM DOC powered by DecisionBrain",
@@ -6402,4 +6402,3 @@
     "keycloakVersion": "8.0.1",
     "userManagedAccessAllowed": false
   }
-]

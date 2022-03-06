@@ -11,7 +11,7 @@ metadata:
 data:
   addUser.sh: |
     #!/bin/bash
-    set -e
+    set +e
     {{- range $dbAlias := .Values.databases }}
     mongo -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --eval "db.getSiblingDB('$MONGODB_{{ $dbAlias }}_database').createUser({user: '$MONGODB_{{ $dbAlias }}_username', pwd: '$MONGODB_{{ $dbAlias }}_password', roles: [{ role: 'dbOwner', db: '$MONGODB_{{ $dbAlias }}_database' }]},{w: 'majority',wtimeout: 5000});"
     {{- end }}
