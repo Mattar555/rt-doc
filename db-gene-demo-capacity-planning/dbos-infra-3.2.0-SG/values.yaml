@@ -68,8 +68,9 @@ keycloak:
   #realmConfigMapName: <name of the ConfigMap>
   # Choose the name of the file of the ConfigMap that contains the realm file
   #only used if keycloak.realm is empty
+  defaultRealmFileName: 'realm-default.json'
   realmFileName: 'realm.json'
-  realm: "{{ .Values.keycloak.realmdata }}"
+  realm: "true"
   # allow to override realm with external content
   realmdata: [{
           "keycloakVersion": "8.0.1",
