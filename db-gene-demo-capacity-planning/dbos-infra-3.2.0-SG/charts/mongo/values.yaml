@@ -31,3 +31,10 @@ config:
 # Enable/disable mongo
 enabled: true
 
+databases:
+  - dbos
+  - scenario
+  - execution
+  - permission
+
+
