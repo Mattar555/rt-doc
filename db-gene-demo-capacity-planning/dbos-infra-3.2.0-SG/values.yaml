@@ -44,6 +44,9 @@ mongo:
           key: mongo-initdb-root-password
   databases:
     - dbos
+    - scenario
+    - execution
+    - permission
 
 postgres:
   config:
