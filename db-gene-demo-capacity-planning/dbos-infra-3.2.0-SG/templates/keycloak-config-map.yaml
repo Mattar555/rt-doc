@@ -10,7 +10,7 @@ metadata:
 data:
   realm.json: |
 {{- if .Values.keycloak.realm }}
-{{ tpl (.Files.Get .Values.keycloak.realmFileName) . | indent 4 }}
+{{ tpl .Values.keycloak.realm . | indent 4 }}
 {{- else }}
 {{ tpl (.Files.Get .Values.keycloak.defaultRealmFileName) . | indent 4 }}
 {{- end }}
