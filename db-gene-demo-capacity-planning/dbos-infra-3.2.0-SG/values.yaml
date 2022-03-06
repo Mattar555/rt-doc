@@ -58,6 +58,7 @@ postgres:
           key: postgres-admin-password
   databases:
     - keycloak
+    - dataServer
 
 keycloak:
   redirectHost: '{{ printf "%s-%s.%s" "dbos-console" .Release.Namespace .Values.global.domain }}'
