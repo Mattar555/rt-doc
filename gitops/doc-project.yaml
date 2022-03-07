@@ -6,7 +6,7 @@ metadata:
 spec:
   destinations:
   - name: in-cluster
-    namespace: '*'
+    namespace: doc
     server: https://kubernetes.default.svc
   sourceRepos:
   - https://github.com/Mattar555/rt-doc
