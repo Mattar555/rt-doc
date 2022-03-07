@@ -11,9 +11,9 @@ global:
   domain: rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud
   routeHostBase: "{{ .Release.Namespace }}.{{ .Values.global.domain }}"
 
-  imageRegistry: quay-quay-quay.rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud/db-gene
+  imageRegistry: quay-quay-quay.rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud/dbgene
   imagePullSecrets:
-    - name: builder-quay-openshift
+    - name: quay-secret
   protocol: https # http or https
   routeKind: Ingress # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
   authMode: keycloak
