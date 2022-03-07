@@ -55,7 +55,7 @@ dbos:
     # this registry gives access to everything needed to run the demo (including product images)
     imageRegistry: dbgene-demos-registry.decisionbrain.cloud
     imagePullSecrets:
-      - name: dbgene-demos-registry.decisionbrain.cloud-secret
+      - name: default-quay-openshift
 
     #  protocol: https # http or https
     routeKind: IngressRoute # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
@@ -71,7 +71,7 @@ capacity-planning:
       # this registry gives access to everything needed to run the demo (application images)
       registry: "dbgene-demos-registry.decisionbrain.cloud/capacity-planning"
       imagePullSecrets:
-        - name: dbgene-demos-registry.decisionbrain.cloud-secret
+        - name: default-quay-openshift
       imagePullPolicy: Always
 
   workers:
@@ -150,7 +150,7 @@ dbos-infra:
       imageName: "keycloak-theme"
       imageVersion: "8.0.1"
       imagePullSecrets:
-        - name: "dbgene-demos-registry.decisionbrain.cloud-secret"
+        - name: "default-quay-openshift"
     args:
       - -Dkeycloak.migration.action=import
       - -Dkeycloak.migration.provider=singleFile

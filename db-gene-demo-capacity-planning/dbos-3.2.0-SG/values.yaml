@@ -13,7 +13,7 @@ global:
 
   imageRegistry: dbgene-demos-registry.decisionbrain.cloud
   imagePullSecrets:
-    - name: dbos-registry.decisionbrain.cloud
+    - name: default-quay-openshift
   protocol: https # http or https
   routeKind: Ingress # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
   authMode: keycloak
