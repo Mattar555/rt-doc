@@ -1,9 +1,9 @@
-kind: Project
-apiVersion: project.openshift.io/v1
-metadata:
-  name: doc
-  labels:
-    kubernetes.io/metadata.name: doc
-  annotations:
-    openshift.io/description: 'Project housing DOC artifacts'
-    openshift.io/display-name: 'doc'
+# kind: Project
+# apiVersion: project.openshift.io/v1
+# metadata:
+#   name: doc
+#   labels:
+#     kubernetes.io/metadata.name: doc
+#   annotations:
+#     openshift.io/description: 'Project housing DOC artifacts'
+#     openshift.io/display-name: 'doc'
