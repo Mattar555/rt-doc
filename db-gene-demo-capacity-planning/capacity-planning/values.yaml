@@ -20,7 +20,7 @@ global:
     registry: "quay-quay-quay.rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud/db-gene/capacity-planning" # Override with an existing docker registry
     imagePullPolicy: Always
     imagePullSecrets: 
-    - name: default-quay-openshift # Override with an existing dockerconfigjson secret name
+    - name: deployer-quay-openshift # Override with an existing dockerconfigjson secret name
   environmentVariables:
   # Allow micro service to reach each other
   - name: "SERVICES_EXECUTION_HOST"
