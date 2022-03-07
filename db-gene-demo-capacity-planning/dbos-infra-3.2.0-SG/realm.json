@@ -39,6 +39,138 @@
     "quickLoginCheckMilliSeconds": 1000,
     "maxDeltaTimeSeconds": 43200,
     "failureFactor": 30,
+    "users": [
+      {
+        "username": "gene_admin",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+            "salt": "8s5bNTEoRUq0siS7Maui+g==",
+            "hashIterations": 100000,
+            "algorithm": "pbkdf2-sha256"
+          }
+        ],
+        "clientRoles": {
+        },
+        "groups": [
+            "GENE_ADMINS",
+            "GENE_USERS"
+        ]
+      },
+      {
+        "username": "user1",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+            "salt": "8s5bNTEoRUq0siS7Maui+g==",
+            "hashIterations": 100000,
+            "algorithm": "pbkdf2-sha256"
+          }
+        ],
+        "clientRoles": {
+        },
+        "groups": [
+            "GENE_USERS"
+        ]
+      },
+      {
+        "username": "user2",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "hashedSaltedValue": "s7xdL+uUa77e1XBVQ9o8Jk1Qd8Fcv9hFTuumqbX4h+Aq6tRBgxTpCssTR+aK/xJ7Ji7Jpr84GxwROjukKaiDcQ==",
+            "salt": "8s5bNTEoRUq0siS7Maui+g==",
+            "hashIterations": 100000,
+            "algorithm": "pbkdf2-sha256"
+          }
+        ],
+        "clientRoles": {
+        },
+        "groups": [
+            "GENE_USERS"
+        ]
+      },
+      {
+        "username": "execution",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "hashedSaltedValue": "/liflNf4sLUp47BS5fDH694C1xVGiSNlHk3ETzOYBDYk4ikURkJnVISS4fcq0wiJ5tri6mkhsSA6bcemZqDTeQ==",
+            "salt": "DeJ32dx3GQo4VtvSNd45AA==",
+            "hashIterations": 100000,
+            "algorithm": "pbkdf2-sha256"
+          }
+        ],
+        "clientRoles": {
+        },
+        "groups": [
+            "GENE_SERVICES"
+        ]
+      },
+      {
+        "username": "backend",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "hashedSaltedValue": "83zoilW8pIFn1HdzOkn00MuV+ujqSxwiVwHBdI87zhG0KQidMNmtQFI8X+5uhyBWXAVlWmU+S9kDxGc2tHpsfQ==",
+            "salt": "6aOEPJiGMdV5ZBVxwJYcog==",
+            "hashIterations": 100000,
+            "algorithm": "pbkdf2-sha256"
+          }
+        ],
+        "clientRoles": {
+        },
+        "groups": [
+            "GENE_SERVICES"
+        ]
+      },
+      {
+        "username": "data-service",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "hashedSaltedValue": "sXmRyhZ1rEUDAvK3+Kdg88A9w/dFYkqagtCN1rt6cBi4q2djcdRYHwTMEAAJxpqnIDGV6rvbiP3MJWCDFaQufQ==",
+            "salt": "97ysMKjnZYloVUwgh/wfHQ==",
+            "hashIterations": 100000,
+            "algorithm": "pbkdf2-sha256"
+          }
+        ],
+        "clientRoles": {
+        },
+        "groups": [
+            "GENE_SERVICES"
+        ]
+      },
+      {
+        "username": "scenario-service",
+        "enabled": true,
+        "credentials": [
+          {
+            "type" : "password",
+            "secretData" : "{\"value\":\"Dztk2OhTpghx66cJXIZMRYy8AXEHjrWDHm+Pd9BmsFRPtAGBXRcZvJFK1rJ+L5JOyr1c+CmLT1buWtVvHfejSg==\",\"salt\":\"eZOfoSw/gG7CaiopuWj4pQ==\"}",
+            "credentialData" : "{\"hashIterations\":100000,\"algorithm\":\"pbkdf2-sha256\"}"
+          }
+        ],
+        "clientRoles": {
+          "realm-management": [
+              "manage-users",
+              "view-clients",
+              "view-users"
+          ]
+        },
+        "groups": [
+            "GENE_SERVICES"
+        ]
+      }
+    ],
     "roles": {
       "realm": [
         {
