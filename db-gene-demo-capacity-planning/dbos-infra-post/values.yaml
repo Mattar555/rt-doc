@@ -1,0 +1,15 @@
+keycloakPostinstall:
+    MASTER_REALM: master
+    USER_NAME: admin
+    PASSWORD: admin
+    ADMIN_CLIENT_ID: admin-cli
+    KEYCLOAK_HOSTNAME: https://keycloak-doc.rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud
+    NAMESPACE: doc
+    REALM_ADMIN_USER_NAME: admin
+    REALM_ADMIN_USER_PASSWORD: admin
+    REALM_ADMIN_USER_EMAIL: admin@rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud
+    REALM_ADMIN_USER_FIRST_NAME: John
+    REALM_ADMIN_USER_LAST_NAME: Smith
+    REALM_IMPORT_PATH: realm.json
+    HTTP_DEBUG: false
+    TLS_VERIFY: true

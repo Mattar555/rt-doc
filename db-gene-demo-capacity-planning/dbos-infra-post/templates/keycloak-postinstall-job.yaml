@@ -1,0 +1,44 @@
+{{- $config := .Values.keycloakPostinstall -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-postinstall
+  namespace: {{ $config.NAMESPACE }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: keycloak-postinsall
+        image: quay.io/leoliu2011/keycloak-postinstall:v1
+        imagePullPolicy: Always
+        env:
+        - name: MASTER_REALM
+          value: {{ $config.MASTER_REALM }}
+        - name: USER_NAME
+          value: {{ $config.USER_NAME }}
+        - name: PASSWORD
+          value: {{ $config.PASSWORD }}
+        - name: ADMIN_CLIENT_ID
+          value: {{ $config.ADMIN_CLIENT_ID }}
+        - name: KEYCLOAK_HOSTNAME
+          value: {{ $config.KEYCLOAK_HOSTNAME }}
+        - name: NAMESPACE
+          value: {{ $config.NAMESPACE }}
+        - name: REALM_ADMIN_USER_NAME
+          value: {{ $config.REALM_ADMIN_USER_NAME }}
+        - name: REALM_ADMIN_USER_PASSWORD
+          value: {{ $config.REALM_ADMIN_USER_PASSWORD }}
+        - name: REALM_ADMIN_USER_EMAIL
+          value: {{ $config.REALM_ADMIN_USER_EMAIL }}
+        - name: REALM_ADMIN_USER_FIRST_NAME
+          value: {{ $config.REALM_ADMIN_USER_FIRST_NAME }}
+        - name: REALM_ADMIN_USER_LAST_NAME
+          value: {{ $config.REALM_ADMIN_USER_LAST_NAME }}
+        - name: REALM_IMPORT_PATH
+          value: {{ $config.REALM_IMPORT_PATH }}
+        - name: HTTP_DEBUG
+          value: "{{ $config.HTTP_DEBUG }}"
+        - name: TLS_VERIFY
+          value: "{{ $config.TLS_VERIFY }}"
+      restartPolicy: Never
+  backoffLimit: 5
