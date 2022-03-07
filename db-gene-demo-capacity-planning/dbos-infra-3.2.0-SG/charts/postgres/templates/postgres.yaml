@@ -20,7 +20,6 @@ data:
     psql --set password="'$POSTGRESQL_dataServer_password'" --set username="$POSTGRESQL_dataServer_username" <<-EOSQL
     CREATE USER :username WITH CREATEDB PASSWORD :password;
     EOSQL
-    {{- end }}
   20-create_db.sh: |
     #!/bin/bash
     set -e
@@ -32,7 +31,6 @@ data:
     psql --set database="$POSTGRESQL_dataServer_database" --set username="'$POSTGRESQL_dataServer_username'" <<EOSQL
     CREATE DATABASE :database OWNER :username;
     EOSQL
-    {{- end }}
 ---
 apiVersion: v1
 kind: Service
