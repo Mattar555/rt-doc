@@ -13,7 +13,7 @@ global:
 
   imageRegistry: quay-quay-quay.rio-aps-poc-14d91fbc484122dac6eebae3af64bb35-0000.au-syd.containers.appdomain.cloud/db-gene
   imagePullSecrets:
-    - name: deployer-quay-openshift
+    - name: builder-quay-openshift
   protocol: https # http or https
   routeKind: Ingress # <Ingress|IngressRoute|IngressGateway> Only with target = kubernetes
   authMode: keycloak
