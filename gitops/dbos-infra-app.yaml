@@ -2,12 +2,12 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: dbos-infra
-  namespace: openshift-gitops
+  namespace: doc
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
   destination:
-    namespace: openshift-gitops
+    namespace: doc
     server: https://kubernetes.default.svc
   project: doc-project
   source:
