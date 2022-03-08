@@ -1,4 +1,6 @@
+{{- $config := .Values.keycloakPostinstall -}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: job-sa
+  namespace: {{ $config.NAMESPACE }}
